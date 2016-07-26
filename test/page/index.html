@@ -1,0 +1,13 @@
+<html>
+  <head>
+    <title>CM Bundler</title>
+  </head>
+  <body>
+    <script type="text/javascript" src="test.js"></script>
+    <!--
+    # generate output.js:
+    node ./bin/cmd.js '{"baseDir":"/Users/michel/Projects/cm-bundler/test/data/base","paths":["/Users/michel/Projects/cm-bundler/test/data/lib","/Users/michel/Projects/cm-bundler/test/data/lib2"],"sourceMaps":true,"content":[{"name":"foo","data":"//foo"},{"name":"bar","require":true,"mapPath":"custom/bar","data":"//bar"}],"libraries":["baz/file1"],"entries":["foo/file2.js","foo/file3.js"]}' > test/page/output.js
+    -->
+    <script type="text/javascript" src="output.js"></script>
+  </body>
+</html>
