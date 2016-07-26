@@ -35,9 +35,9 @@ var executeInVM = function(src) {
 
 describe('bundler', function() {
 
-  it('full', function() {
-    return bundler
-      .process({
+  it('full', function(done) {
+    bundler
+      .browserify({
         "entries": [
           "foo/file2.js",
           "foo/file3.js"
@@ -63,8 +63,8 @@ describe('bundler', function() {
         ],
         "sourceMaps": true,
         "baseDir": baseDir
-      })
-      .then(function(src) {
+      }, function(error, src) {
+        assert.ifError(error);
         assert.isObject(src);
         assert.ok(src.length > 0);
         var str = src.toString('utf-8');
@@ -141,6 +141,8 @@ describe('bundler', function() {
         assert.equal(context.getCountExecuted('baz/file2'), 1);
         // lib only
         assert.equal(context.getCountExecuted('baz/file1'), 1);
+
+        done();
       });
   });
 });
