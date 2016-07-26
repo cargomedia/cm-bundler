@@ -33,7 +33,7 @@ var executeInVM = function(src) {
 };
 
 
-describe('bundler', function() {
+describe('browserify', function() {
 
   it('full', function(done) {
     bundler
