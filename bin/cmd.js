@@ -6,7 +6,7 @@ try {
     .process()
     .pipe(output());
 
-} catch(error) {
+} catch (error) {
   process.stderr.write(error.stack + "\n");
   process.exit(1);
 }

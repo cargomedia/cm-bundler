@@ -11,7 +11,7 @@ var libDir = path.join(dataDir, 'lib');
 
 var executeInVM = function(src) {
   var context = {
-    console:console,
+    console: console,
     execCount: {},
     loadCount: {},
     moduleLoaded: function(name) {

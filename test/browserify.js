@@ -85,7 +85,7 @@ describe('browserify', function() {
           var index = 0;
           do {
             valid = (new RegExp(name)).test(map.sourcemap.sources[index]);
-          } while(!valid && ++index < map.sourcemap.sources.length);
+          } while (!valid && ++index < map.sourcemap.sources.length);
 
           assert.ok(valid, '`' + name + '` exists in the source maps.');
         });
