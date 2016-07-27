@@ -17,10 +17,14 @@
   },
   "dependencies": {
     "browserify": "^13.0.1",
-    "convert-source-map": "^1.2.0",
-    "xtend": "^4.0.1"
+    "xtend": "^4.0.1",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "gulp-sourcemaps": "^1.6.0",
+    "through2": "^2.0.1"
   },
   "devDependencies": {
+    "convert-source-map": "^1.2.0",
     "chai": "^2.1.2",
     "mocha": "^2.5.3"
   }
