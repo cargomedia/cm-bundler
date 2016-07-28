@@ -16,6 +16,7 @@
     "test": "$(npm bin)/mocha"
   },
   "dependencies": {
+    "commander": "^2.9.0",
     "browserify": "^13.0.1",
     "xtend": "^4.0.1",
     "through2": "^2.0.1",
