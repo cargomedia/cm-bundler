@@ -16,7 +16,17 @@ Usage
 -----
 
 ```bash
-cm-bundler '<JSON>' > bundle.js
+$ ./bin/cmd.js
+
+  Usage: cmd [options] <json>
+
+  Options:
+
+    -h, --help             output usage information
+    -V, --version          output the version number
+    -c, --code-only        output the source code only
+    -s, --sourcemaps-only  output the sourcemaps only
+    -n, --nice             JSON formatting.
 ```
 
 #### JSON configuration
