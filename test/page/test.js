@@ -16,3 +16,4 @@ window.getCountExecuted = function(name) {
   return name in context.execCount ? context.execCount[name] : 0;
 };
 
+console.log('TEST1');

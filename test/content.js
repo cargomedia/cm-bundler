@@ -150,7 +150,13 @@ describe('add content', function() {
       assert.equal(context.getCountLoaded('foo3'), 1);
       assert.equal(context.getCountExecuted('foo2'), 0);
 
-      assert.equal(context.require('foo3'), 'foo3');
+      assert.throws(function() {
+        context.require('foo1');
+      }, /Cannot find module 'foo1'/);
+      assert.throws(function() {
+        context.require('foo3');
+      }, /Cannot find module 'foo3'/);
+
       context.require('foo2')();
 
       assert.equal(context.getCountLoaded('foo2'), 1);

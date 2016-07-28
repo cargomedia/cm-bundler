@@ -42,6 +42,10 @@ cm-bundler '<JSON>' > bundle.js
       "data": "var bla = require('blubb/bla'); module.exports = function() { //something... };"
     }
   ],
+  "concat": [                 // non CommonJS files, concatenated after CommonJS content
+    "vanilla/file/foo.js",
+    "vanilla/file/bar.js"
+  ],
   "paths": [
      "path/lib/foo",          // paths for require() lookup
      "path/lib/bar"
