@@ -2,6 +2,7 @@
 try {
   var sourcemaps = require('gulp-sourcemaps');
   var program = require('commander');
+  var bundler = require('../lib/bundler');
   var version = require('../package.json').version;
   var condition = require('../lib/stream/condition');
   var output = require('../lib/stream/output');
@@ -9,7 +10,8 @@ try {
   var jsonConfig = null;
   var options = {
     code: false,
-    sourcemaps: false
+    sourcemaps: false,
+    checksum: false
   };
 
   program.version(version);
@@ -31,6 +33,14 @@ try {
     });
 
   program
+    .command('checksum <json>')
+    .description('generate the bundle checksum')
+    .action(function(json) {
+      options.checksum = true;
+      jsonConfig = JSON.parse(json);
+    });
+
+  program
     .command('all <json>')
     .description('generate the bundle code + inline sourcemaps')
     .action(function(json) {
@@ -44,13 +54,18 @@ try {
     process.exit(1);
     return;
   }
-
-  require('../lib/bundler')
-    .process(jsonConfig)
-    .pipe(condition(!options.code && !options.sourcemaps, function() {
-      return sourcemaps.write();
-    }))
-    .pipe(output(options));
+  if(options.checksum) {
+    bundler
+      .checksum(jsonConfig)
+      .pipe(output());
+  } else {
+    bundler
+      .process(jsonConfig)
+      .pipe(condition(!options.code && !options.sourcemaps, function() {
+        return sourcemaps.write();
+      }))
+      .pipe(output(options));
+  }
 
 } catch (error) {
   process.stderr.write(error.stack + "\n");
