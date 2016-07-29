@@ -1,8 +1,9 @@
+[![Build Status](https://travis-ci.org/cargomedia/cm-bundler.svg?branch=master)](https://travis-ci.org/cargomedia/cm-bundler)
+
 CM bundler
 ==========
 
-Command line tool to generate javascript bundles from different sources: CommonJS / Vanilla / inline code.
-The configuration is read from the standard input and it generates the bundle code on the standard output.
+Command line tool to bundle up javascript from different sources: CommonJS / Vanilla / inline code.
 
 
 Installation
