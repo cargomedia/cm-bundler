@@ -16,17 +16,22 @@ Usage
 -----
 
 ```bash
-$ ./bin/cmd.js
+$ cm-bundler
 
-  Usage: cmd [options] <json>
+  Usage: cm-bundler [options] [command]
+
+
+  Commands:
+
+    code <json>        generate the bundle code
+    sourcemaps <json>  generate the sourcemaps
+    checksum <json>    generate the bundle checksum
+    all <json>         generate the bundle code + inline sourcemaps
 
   Options:
 
-    -h, --help             output usage information
-    -V, --version          output the version number
-    -c, --code-only        output the source code only
-    -s, --sourcemaps-only  output the sourcemaps only
-    -n, --nice             JSON formatting.
+    -h, --help     output usage information
+    -V, --version  output the version number
 ```
 
 #### JSON configuration
@@ -52,7 +57,7 @@ $ ./bin/cmd.js
       "data": "var bla = require('blubb/bla'); module.exports = function() { //something... };"
     }
   ],
-  "concat": [                 // non CommonJS files, concatenated after CommonJS content
+  "concat": [                 // non CommonJS files prepended to the bundle
     "vanilla/file/foo.js",
     "vanilla/file/bar.js"
   ],
@@ -60,7 +65,8 @@ $ ./bin/cmd.js
      "path/lib/foo",          // paths for require() lookup
      "path/lib/bar"
   ],
-  "sourceMaps": true          // generate inline source maps
+  "sourceMaps": true        
+  "uglify": true             
 }
 ```
 
