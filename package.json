@@ -24,11 +24,10 @@
     "vinyl-fs": "^2.4.3",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
-    "gulp-sourcemaps": "^1.6.0",
     "concat-with-sourcemaps": "^1.0.4",
     "read-only-stream": "^2.0.0",
     "gulp-uglify": "^1.5.4",
-    "gulp-concat": "^2.6.0"
+    "gulp-sourcemaps": "^1.6.0"
   },
   "devDependencies": {
     "convert-source-map": "^1.2.0",
