@@ -2,10 +2,10 @@ var vm = require('vm');
 var assert = require('chai').assert;
 var browserify = require('browserify');
 var convert = require('convert-source-map');
-var bundler = require('../lib/bundler');
+var bundler = require('../../lib/bundler');
 var path = require('path');
 
-var dataDir = path.join(__dirname, 'data');
+var dataDir = path.join(__dirname, '..', '_data');
 var baseDir = path.join(dataDir, 'base');
 var libDir = path.join(dataDir, 'lib');
 var lib2Dir = path.join(dataDir, 'lib2');
@@ -33,7 +33,7 @@ var executeInVM = function(src) {
 };
 
 
-describe('browserify', function() {
+describe('bundler: browserify', function() {
 
   it('full', function(done) {
     bundler.browserify({
