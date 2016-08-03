@@ -2,10 +2,10 @@ var vm = require('vm');
 var assert = require('chai').assert;
 var browserify = require('browserify');
 var convert = require('convert-source-map');
-var bundler = require('../lib/bundler');
+var bundler = require('../../lib/bundler');
 var path = require('path');
 
-var dataDir = path.join(__dirname, 'data');
+var dataDir = path.join(__dirname, '..', '_data');
 var baseDir = path.join(dataDir, 'base');
 var libDir = path.join(dataDir, 'lib');
 
@@ -32,7 +32,7 @@ var executeInVM = function(src) {
 };
 
 
-describe('add libraries', function() {
+describe('bundler: add entries', function() {
 
   it('module not found', function(done) {
     var b = browserify({
@@ -52,12 +52,11 @@ describe('add libraries', function() {
 
   it('no dependencies', function(done) {
     var b = browserify({
-      basedir: baseDir,
-      paths: [libDir]
+      basedir: baseDir
     });
 
-    bundler.addLibraries(b, [
-      'bar/file1'
+    bundler.addEntries(b, [
+      'foo/file1.js'
     ]);
 
     b.bundle(function(error, src) {
@@ -66,12 +65,59 @@ describe('add libraries', function() {
       assert.ok(src.length > 0);
 
       var context = executeInVM(src);
-      assert.typeOf(context.require, 'function');
-      assert.equal(context.getCountLoaded('bar/file1'), 0);
-      assert.equal(context.getCountExecuted('bar/file1'), 0);
-      context.require('bar/file1')();
+      assert.isUndefined(context.require);
+      assert.equal(context.getCountLoaded('foo/file1'), 1);
+      assert.equal(context.getCountExecuted('foo/file1'), 0);
+      done();
+    });
+  });
+
+  it('with local dependencies', function(done) {
+    var b = browserify({
+      basedir: baseDir
+    });
+
+    bundler.addEntries(b, [
+      'foo/file2.js'
+    ]);
+
+    b.bundle(function(error, src) {
+      assert.ifError(error);
+      assert.isObject(src);
+      assert.ok(src.length > 0);
+
+      var context = executeInVM(src);
+      assert.isUndefined(context.require);
+      assert.equal(context.getCountLoaded('foo/file2'), 1);
+      assert.equal(context.getCountExecuted('foo/file2'), 0);
+      assert.equal(context.getCountLoaded('foo/file1'), 1);
+      assert.equal(context.getCountExecuted('foo/file1'), 0);
+      done();
+    });
+  });
+
+
+  it('with external dependencies', function(done) {
+    var b = browserify({
+      basedir: baseDir,
+      paths: [libDir]
+    });
+
+    bundler.addEntries(b, [
+      'foo/file3.js'
+    ]);
+
+    b.bundle(function(error, src) {
+      assert.ifError(error);
+      assert.isObject(src);
+      assert.ok(src.length > 0);
+
+      var context = executeInVM(src);
+      assert.isUndefined(context.require);
+      assert.equal(context.getCountLoaded('foo/file3'), 1);
+      assert.equal(context.getCountExecuted('foo/file3'), 0);
       assert.equal(context.getCountLoaded('bar/file1'), 1);
-      assert.equal(context.getCountExecuted('bar/file1'), 1);
+      assert.equal(context.getCountExecuted('bar/file1'), 0);
       done();
     });
   });
