@@ -60,7 +60,9 @@ describe('bundler: browserify', function() {
         libDir,
         lib2Dir
       ],
-      "sourceMaps": true,
+      "sourceMaps": {
+        "enabled": true
+      },
       "baseDir": baseDir
     }).bundle(function(error, src) {
       assert.ifError(error);
