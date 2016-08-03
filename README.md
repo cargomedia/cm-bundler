@@ -84,7 +84,7 @@ This option replace all matching `file.path` in the sourcemaps, in addition to s
 - all relative references (`../`) are removed (`/\.\.\//g`)
 - `.*browser-pack/_prelude.js` changed by `_pack/.prelude`, see browserify generated [prelude][b-prelude] file
 
-The replacement could be defined by a regular expression or a string, in this case, it will be converted into `/<matching-string>/g`.
+The replacement could be defined by a regular expression or a string, in this case, it will be converted into `/<matching-string>/gi`.
 Example: `/usr/foo/my/lib/file.js` file with `{"foo/lib/": ".*my/lib/"}` replacement will be visible in the browser as `foo/lib/file.js`.
 
 Test
