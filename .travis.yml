@@ -3,3 +3,11 @@ node_js:
 - '6'
 - '5'
 script: npm test
+deploy:
+  provider: npm
+  email: tech@cargomedia.ch
+  api_key:
+    secure: 3wwkr4nfu+Nkg5mXSoBnSrAf8N4lgGkUG1/iHYZrNZtJRqCnzSkMubQ4ElO2yqlaQJAiVgtTP6w9KVmh4eqxtSwgWvoHJ+Q5aZsHxaR8H3w0cwcazEMuG6lWeM0vWROIAcF5c8EP1E3YqiSXgMoTZhg8c0GMxyX61BbW9W9WewFuV56FbY9alPdKhYQVn3zQXzG5yrKrPy3xwpNlibONmEwR19zkfdsHTsf+upWCzXDZztasBe4w+P0ZJ42poad+sh2S3OFIPPCu55S2ihjDbDHhyjvImVi1VsAVWhWLxu9/YIOGjJdm0MelLWjkb9ojDkcDfqdGR1CDfyupETjLo+8Jw6T+LfJfjS8DLQQBsRFpZGgiPM0q35llxO6LDxcrxj7TPjgE5fbyQmdz9znbNtT4H6vejFtnllEpZXnfdxrpaLkqPwfgvATNGBwoOkO1JEqKKY2LmlDwD/4BWIQp42oZPDP4NiiqM3C9minEI/VPOvXQUjBAkLkGlH2ZYK5OHZBzeIN+BXKuYQp64NAvuqcMEz+s1xjGYSnAG2gbJBmE6UDgN/7bIPtFBWNS4ug7Y3LYbxo99hZlUcqdX1HaFmooBJzuC1XC1T94X8MMYDMOkasXeNU0Jb2xd4h0KWqvOfLllbeNsZRIzJbxG/Nu/Hjm9gX98rA3P5yKDaCskqk=
+  on:
+    tags: true
+    repo: cargomedia/cm-bundler
