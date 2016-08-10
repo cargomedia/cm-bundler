@@ -1,4 +1,4 @@
 moduleLoaded('foo/file1');
 module.exports = function() {
-  moduleExecuted('foo/file1');
+  moduleCalled('foo/file1');
 };
