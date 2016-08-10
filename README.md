@@ -49,22 +49,23 @@ $ cm-bundler
   ],
   "content": [
     {
-      "name": "foo",           // not accessible from the global scope
+      "path": "foo",           
       "data": "var qux = require('baz/qux'); module.exports = function() { //something... };"
     },
     {
-      "name": "bar", 
-      "required": true,       // accessible with `require('bar')`
-      "mapPath": "source/map/path/bar.js", 
-      "data": "var bla = require('blubb/bla'); module.exports = function() { //something... };"
+      "path": "bar", 
+      "data": "var bla = require('blubb/bla'); module.exports = function() { //something... };",
+      "execute": true,          // loaded as an entry-point 
+      "expose": false,          // accessible with `require('bar')`
+      "parse": false            // parse/resolve `require()` present in `data`, must be set to `false` for cross-reference between "content" / `true` for external references (libraries, etc..) 
     }
   ],
-  "concat": [                 // non CommonJS files prepended to the bundle
+  "concat": [                   // non CommonJS files prepended to the bundle
     "vanilla/file/foo.js",
     "vanilla/file/bar.js"
   ],
   "paths": [
-     "path/lib/foo",          // paths for require() lookup
+     "path/lib/foo",            // paths for require() lookup
      "path/lib/bar"
   ],
   "sourceMaps": {
