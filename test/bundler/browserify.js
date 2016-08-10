@@ -1,31 +1,33 @@
 var vm = require('vm');
+var path = require('path');
 var assert = require('chai').assert;
+var deap = require('deap');
 var browserify = require('browserify');
 var convert = require('convert-source-map');
-var bundler = require('../../lib/bundler');
-var path = require('path');
 
 var dataDir = path.join(__dirname, '..', '_data');
 var baseDir = path.join(dataDir, 'base');
 var libDir = path.join(dataDir, 'lib');
 var lib2Dir = path.join(dataDir, 'lib2');
 
+var bundler = require('../../lib/bundler');
+
 var executeInVM = function(src) {
   var context = {
     console: console,
-    execCount: {},
+    callCount: {},
     loadCount: {},
     moduleLoaded: function(name) {
-      context.loadCount[name] = name in context.loadCount ? context.loadCount[name]++ : 1;
+      context.loadCount[name] = context.getCountLoaded(name) + 1;
     },
     getCountLoaded: function(name) {
       return name in context.loadCount ? context.loadCount[name] : 0;
     },
-    moduleExecuted: function(name) {
-      context.execCount[name] = name in context.execCount ? context.execCount[name]++ : 1;
+    moduleCalled: function(name) {
+      context.callCount[name] = context.getCountCalled(name) + 1;
     },
-    getCountExecuted: function(name) {
-      return name in context.execCount ? context.execCount[name] : 0;
+    getCountCalled: function(name) {
+      return name in context.callCount ? context.callCount[name] : 0;
     }
   };
   vm.runInNewContext(src, context);
@@ -46,14 +48,15 @@ describe('bundler: browserify', function() {
       ],
       "content": [
         {
-          "name": "foo",
-          "data": "moduleLoaded('foo'); module.exports=function(){moduleExecuted('foo');};"
+          "path": "foo",
+          "data": "moduleLoaded('foo'); module.exports=function(){moduleCalled('foo');};"
         },
         {
-          "name": "bar",
-          "require": true,
-          "mapPath": "custom/bar",
-          "data": "moduleLoaded('bar'); module.exports=require('baz/file2');"
+          "path": "bar",
+          "data": "moduleLoaded('bar'); module.exports=require('baz/file2');",
+          "execute": false,
+          "expose": true,
+          "parse": true
         }
       ],
       "paths": [
@@ -80,7 +83,7 @@ describe('bundler: browserify', function() {
         'baz/file1',
         'baz/file2',
         'foo',
-        'custom/bar'
+        'bar'
       ].forEach(function(name) {
         var valid = false;
         var index = 0;
@@ -108,16 +111,16 @@ describe('bundler: browserify', function() {
 
 
       // entries
-      assert.equal(context.getCountExecuted('foo/file1'), 0);
-      assert.equal(context.getCountExecuted('foo/file2'), 0);
-      assert.equal(context.getCountExecuted('foo/file3'), 0);
+      assert.equal(context.getCountCalled('foo/file1'), 0);
+      assert.equal(context.getCountCalled('foo/file2'), 0);
+      assert.equal(context.getCountCalled('foo/file3'), 0);
       // lib + entry dep
-      assert.equal(context.getCountExecuted('bar/file1'), 0);
+      assert.equal(context.getCountCalled('bar/file1'), 0);
       // content
-      assert.equal(context.getCountExecuted('foo'), 0);
-      assert.equal(context.getCountExecuted('baz/file2'), 0);
+      assert.equal(context.getCountCalled('foo'), 0);
+      assert.equal(context.getCountCalled('baz/file2'), 0);
       // lib only
-      assert.equal(context.getCountExecuted('baz/file1'), 0);
+      assert.equal(context.getCountCalled('baz/file1'), 0);
 
 
       ['baz/file1', 'bar'].forEach(function(exposedModule) {
@@ -132,16 +135,16 @@ describe('bundler: browserify', function() {
       });
 
       // entries
-      assert.equal(context.getCountExecuted('foo/file1'), 0);
-      assert.equal(context.getCountExecuted('foo/file2'), 0);
-      assert.equal(context.getCountExecuted('foo/file3'), 0);
+      assert.equal(context.getCountCalled('foo/file1'), 0);
+      assert.equal(context.getCountCalled('foo/file2'), 0);
+      assert.equal(context.getCountCalled('foo/file3'), 0);
       // lib + entry dep
-      assert.equal(context.getCountExecuted('bar/file1'), 0);
+      assert.equal(context.getCountCalled('bar/file1'), 0);
       // content
-      assert.equal(context.getCountExecuted('foo'), 0);
-      assert.equal(context.getCountExecuted('baz/file2'), 1);
+      assert.equal(context.getCountCalled('foo'), 0);
+      assert.equal(context.getCountCalled('baz/file2'), 1);
       // lib only
-      assert.equal(context.getCountExecuted('baz/file1'), 1);
+      assert.equal(context.getCountCalled('baz/file1'), 1);
 
       done();
     });
