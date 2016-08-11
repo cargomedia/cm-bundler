@@ -94,6 +94,33 @@ describe('bundler: add content', function() {
       });
   });
 
+  it('exposed / executed', function(done) {
+    var options = deap(
+      {},
+      content.prepare([
+        {path: 'foo', source: 'moduleLoaded("foo"); module.exports=function(){moduleCalled("foo");};', execute: true, expose: true}
+      ])
+    );
+
+    content
+      .process(browserify(options))
+      .bundle(function(error, src) {
+        var context = executeInVM(src);
+        assert.ifError(error);
+        assert.ok(src.length > 0);
+        assert.equal(context.getCountLoaded('foo'), 1);
+        assert.typeOf(context.require, 'function');
+
+        var foo = context.require('foo');
+        assert.equal(context.getCountLoaded('foo'), 1);
+        assert.equal(context.getCountCalled('foo'), 0);
+
+        foo();
+        assert.equal(context.getCountCalled('foo'), 1);
+        done();
+      });
+  });
+
   it('with dependencies', function(done) {
     var options = deap(
       {
