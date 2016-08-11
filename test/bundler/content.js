@@ -42,14 +42,14 @@ describe('bundler: add content', function() {
 
     assert.throws(function() {
       content.prepare([{path: 'foo'}]);
-    }, /content.data property required./);
+    }, /content.source property required./);
   });
 
   it('minimal', function(done) {
     var options = deap(
       {},
       content.prepare([
-        {path: 'foo', data: 'moduleLoaded("foo");'}
+        {path: 'foo', source: 'moduleLoaded("foo");'}
       ])
     );
 
@@ -71,7 +71,7 @@ describe('bundler: add content', function() {
     var options = deap(
       {},
       content.prepare([
-        {path: 'foo', data: 'moduleLoaded("foo"); module.exports=function(){moduleCalled("foo");};', execute: false, expose: true}
+        {path: 'foo', source: 'moduleLoaded("foo"); module.exports=function(){moduleCalled("foo");};', execute: false, expose: true}
       ])
     );
 
@@ -94,7 +94,6 @@ describe('bundler: add content', function() {
       });
   });
 
-
   it('with dependencies', function(done) {
     var options = deap(
       {
@@ -102,7 +101,7 @@ describe('bundler: add content', function() {
         paths: [libDir]
       },
       content.prepare([
-        {path: 'foo', data: 'moduleLoaded("foo"); require("bar/file1")();', parse: true}
+        {path: 'foo', source: 'moduleLoaded("foo"); require("bar/file1")();'}
       ])
     );
 
@@ -120,19 +119,58 @@ describe('bundler: add content', function() {
       });
   });
 
+  it('as dependencies', function(done) {
+    var options = deap(
+      {
+        basedir: baseDir,
+        debug: true
+      },
+      content.prepare([
+        {path: 'foobar', source: 'moduleLoaded("foobar"); module.exports=function() {moduleCalled("foobar")};'}
+      ])
+    );
+
+    var b = browserify(options);
+    b.add('foo/requireFoobar.js');
+
+    content.process(b);
+    b.bundle(function(error, src) {
+      assert.ifError(error);
+      var context = executeInVM(src);
+      var str = src.toString('utf-8');
+      var map = convert.fromSource(str);
+
+      assert.ok(src.length > 0);
+      assert.isUndefined(context.require);
+
+      ['foo/requireFoobar.js', 'foobar'].forEach(function(name) {
+        assert.ok(
+          map.sourcemap.sources.filter(function(source) {
+            return (new RegExp(name)).test(source);
+          }).length > 0,
+          '`' + name + '` exists in the source maps.'
+        );
+      });
+      assert.equal(context.getCountLoaded('requireFoobar'), 1);
+      assert.equal(context.getCountLoaded('foobar'), 1);
+      assert.equal(context.getCountCalled('foobar'), 1);
+      done();
+    });
+  });
+
   it('mixed', function(done) {
     var options = deap(
       {debug: true},
       content.prepare([
-        {path: 'foo1', data: 'moduleLoaded("foo1");'},
-        {path: 'foo2', data: 'moduleLoaded("foo2"); module.exports=function(){moduleCalled("foo2");};', execute: false, expose: true},
-        {path: 'foo3', data: 'moduleLoaded("foo3"); module.exports=function(){require("foo2")();};', expose: true},
+        {path: 'foo1', source: 'moduleLoaded("foo1");'},
+        {path: 'foo2', source: 'moduleLoaded("foo2"); module.exports=function(){moduleCalled("foo2");};', execute: false, expose: true},
+        {path: 'foo3', source: 'moduleLoaded("foo3"); module.exports=function(){require("foo2")();};', expose: true},
         {
           path: 'foo4',
-          data: 'moduleLoaded("foo4"); var foo2 = require("foo2"); var foo3 = require("foo3"); module.exports={execFoo2:function(){foo2();},execFoo3:function(){foo3();}};',
+          source: 'moduleLoaded("foo4"); var foo2 = require("foo2"); var foo3 = require("foo3"); module.exports={execFoo2:function(){foo2();},execFoo3:function(){foo3();}};',
           expose: true
         },
-        {path: 'foo5', data: 'moduleLoaded("foo5");', execute: false, expose: true}
+        {path: 'foo5', source: 'moduleLoaded("foo5");', execute: false, expose: true}
       ]));
 
     content
