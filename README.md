@@ -50,14 +50,13 @@ $ cm-bundler
   "content": [
     {
       "path": "foo",           
-      "data": "var qux = require('baz/qux'); module.exports = function() { //something... };"
+      "source": "// js source code"
     },
     {
       "path": "bar", 
-      "data": "var bla = require('blubb/bla'); module.exports = function() { //something... };",
+      "source": "// js source code",
       "execute": true,          // loaded as an entry-point 
-      "expose": false,          // accessible with `require('bar')`
-      "parse": false            // parse/resolve `require()` present in `data`, must be set to `false` for cross-reference between "content" / `true` for external references (libraries, etc..) 
+      "expose": true            // accessible with `require('bar')`
     }
   ],
   "concat": [                   // non CommonJS files prepended to the bundle
