@@ -1,4 +1,4 @@
 moduleLoaded('bar/file1');
 module.exports = function() {
-  moduleExecuted('bar/file1');
+  moduleCalled('bar/file1');
 };
