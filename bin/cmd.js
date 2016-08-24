@@ -6,6 +6,7 @@ try {
   var version = require('../package.json').version;
   var condition = require('../lib/stream/condition');
   var output = require('../lib/stream/output');
+  var benchmarker = require('../lib/stream/benchmarker');
 
   var jsonConfig = null;
   var options = {
@@ -13,8 +14,6 @@ try {
     sourcemaps: false,
     checksum: false
   };
-
-  program.version(version);
 
   program
     .command('code <json>')
@@ -47,24 +46,36 @@ try {
       jsonConfig = JSON.parse(json);
     });
 
-  program.parse(process.argv);
+  program
+    .version(version)
+    .option('-b, --benchmark <file>', 'Benchmark output file')
+    .parse(process.argv);
 
   if (!jsonConfig || program.args.length > 2) {
     program.outputHelp();
     process.exit(1);
     return;
   }
+
+  var bench = benchmarker({
+    enabled: !!program.benchmark,
+    output: program.benchmark
+  });
+
   if(options.checksum) {
     bundler
       .checksum(jsonConfig)
-      .pipe(output());
+      .pipe(output())
+      .pipe(bench.log());
   } else {
     bundler
       .process(jsonConfig)
       .pipe(condition(!options.code && !options.sourcemaps, function() {
         return sourcemaps.write();
       }))
-      .pipe(output(options));
+      .pipe(bench.mark('write-sourcemap'))
+      .pipe(output(options))
+      .pipe(bench.log());
   }
 
 } catch (error) {
