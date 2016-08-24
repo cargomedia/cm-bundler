@@ -48,7 +48,7 @@ try {
 
   program
     .version(version)
-    .option('-b, --benchmark <file>', 'Benchmark output file')
+    .option('-b, --benchmark <file>', 'benchmark output file')
     .parse(process.argv);
 
   if (!jsonConfig || program.args.length > 2) {

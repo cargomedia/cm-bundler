@@ -31,8 +31,9 @@ $ cm-bundler
 
   Options:
 
-    -h, --help     output usage information
-    -V, --version  output the version number
+    -h, --help              output usage information
+    -V, --version           output the version number
+    -b, --benchmark <file>  benchmark output file
 ```
 
 #### JSON configuration
@@ -86,6 +87,24 @@ This option replace all matching `file.path` in the sourcemaps, in addition to s
 
 The replacement could be defined by a regular expression or a string, in this case, it will be converted into `/<matching-string>/gi`.
 Example: `/usr/foo/my/lib/file.js` file with `{"foo/lib/": ".*my/lib/"}` replacement will be visible in the browser as `foo/lib/file.js`.
+
+
+#### Benchmark option
+
+`--benchmark <file>` could be used to generate benchmark report for each command.
+
+Reports give information about the time spent on each pipeline step, for example:
+
+```
+start: 0.004s
+browserify: 2.727s
+sourcemap: 0.023s
+concat: 1.248s
+uglify: 23.183s
+remap: 0.002s
+write-sourcemap: 0.122s
+end: 0.107s
+```
 
 Test
 ----
