@@ -26,7 +26,6 @@ $ cm-bundler
 
     code <json>        generate the bundle code
     sourcemaps <json>  generate the sourcemaps
-    checksum <json>    generate the bundle checksum
     all <json>         generate the bundle code + inline sourcemaps
 
   Options:

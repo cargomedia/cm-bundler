@@ -11,8 +11,7 @@ try {
   var jsonConfig = null;
   var options = {
     code: false,
-    sourcemaps: false,
-    checksum: false
+    sourcemaps: false
   };
 
   program
@@ -28,14 +27,6 @@ try {
     .description('generate the sourcemaps')
     .action(function(json) {
       options.sourcemaps = true;
-      jsonConfig = JSON.parse(json);
-    });
-
-  program
-    .command('checksum <json>')
-    .description('generate the bundle checksum')
-    .action(function(json) {
-      options.checksum = true;
       jsonConfig = JSON.parse(json);
     });
 
@@ -62,21 +53,14 @@ try {
     output: program.benchmark
   });
 
-  if(options.checksum) {
-    bundler
-      .checksum(jsonConfig)
-      .pipe(output())
-      .pipe(bench.log());
-  } else {
-    bundler
-      .process(jsonConfig)
-      .pipe(condition(!options.code && !options.sourcemaps, function() {
-        return sourcemaps.write();
-      }))
-      .pipe(bench.mark('write-sourcemap'))
-      .pipe(output(options))
-      .pipe(bench.log());
-  }
+  bundler
+    .process(jsonConfig)
+    .pipe(condition(!options.code && !options.sourcemaps, function() {
+      return sourcemaps.write();
+    }))
+    .pipe(bench.mark('write-sourcemap'))
+    .pipe(output(options))
+    .pipe(bench.log());
 
 } catch (error) {
   process.stderr.write(error.stack + "\n");
