@@ -36,13 +36,16 @@ try {
     return bundler
       .process(config)
       .pipe(filter.code())
+      .pipe(filter.createResponse())
       .pipe(client);
   });
   server.on('sourcemaps', function(client, config) {
-    console.log('generate sourcemaps for config:', config);
+    console.log('generate sourcemaps for config:');
+    console.log(JSON.stringify(config, null, '  '));
     return bundler
       .process(config)
       .pipe(filter.sourcemaps())
+      .pipe(filter.createResponse())
       .pipe(client);
   });
   server.on('error', function(error) {
