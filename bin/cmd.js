@@ -32,7 +32,8 @@ try {
 
   server = new UnixSocketServer(program.socket || '/var/run/cm-bundler.sock');
   server.on('code', function(client, config) {
-    console.log('generate code for config:', config);
+    console.log('generate code for config:');
+    console.log(JSON.stringify(config, null, '  '));
     return bundler
       .process(config)
       .pipe(filter.code())
