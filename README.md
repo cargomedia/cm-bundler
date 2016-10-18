@@ -19,20 +19,14 @@ Usage
 ```bash
 $ cm-bundler
 
-  Usage: cm-bundler [options] [command]
-
-
-  Commands:
-
-    code <json>        generate the bundle code
-    sourcemaps <json>  generate the sourcemaps
-    all <json>         generate the bundle code + inline sourcemaps
+  Usage: cm-bundler [options]
 
   Options:
 
-    -h, --help              output usage information
-    -V, --version           output the version number
-    -b, --benchmark <file>  benchmark output file
+    -h, --help           output usage information
+    -V, --version        output the version number
+    -s, --socket <file>  unix domain socket file (default: /var/run/cm-bundler.sock)
+    -v, --verbose        be more verbose
 ```
 
 ### Request
