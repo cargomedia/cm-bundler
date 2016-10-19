@@ -27,7 +27,8 @@
     "concat-with-sourcemaps": "^1.0.4",
     "read-only-stream": "^2.0.0",
     "gulp-uglify": "^2.0.0",
-    "gulp-sourcemaps": "^1.6.0"
+    "gulp-sourcemaps": "^1.6.0",
+    "lru-cache": "^4.0.1"
   },
   "devDependencies": {
     "convert-source-map": "^1.2.0",
