@@ -16,6 +16,7 @@
     "test": "$(npm bin)/mocha"
   },
   "dependencies": {
+    "inherits": "^2.0.3",
     "commander": "^2.9.0",
     "browserify": "^13.0.1",
     "deap": "^1.0.0",
@@ -28,7 +29,9 @@
     "read-only-stream": "^2.0.0",
     "gulp-uglify": "^2.0.0",
     "gulp-sourcemaps": "^1.6.0",
-    "lru-cache": "^4.0.1"
+    "lru-cache": "^4.0.1",
+    "chokidar": "^1.6.1",
+    "bluebird": "^3.4.6"
   },
   "devDependencies": {
     "convert-source-map": "^1.2.0",

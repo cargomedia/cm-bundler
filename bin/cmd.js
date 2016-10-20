@@ -14,7 +14,9 @@ try {
   var program = require('commander');
   var bundler = require('../lib/bundler');
   var filter = require('../lib/stream/filter');
+  var Promise = require('bluebird');
   var UnixSocketServer = require('../lib/socket/server');
+  var configCache = require('../lib/config/cache').getInstance();
 
   program
     .version(version)
@@ -31,23 +33,46 @@ try {
   verbose = program.verbose;
 
   server = new UnixSocketServer(program.socket || '/var/run/cm-bundler.sock');
-  server.on('code', function(client, config) {
-    console.log('generate code for config:');
-    console.log(JSON.stringify(config, null, '  '));
-    return bundler
-      .process(config)
-      .pipe(filter.code())
-      .pipe(filter.createResponse())
-      .pipe(client);
+
+  server.on('code', function(client, jsonConfig) {
+    Promise
+      .try(function() {
+        return configCache.get(jsonConfig);
+      })
+      .then(function(config) {
+        console.log('generate code for config (key:%s, liveKey:%s)', config.key(), config.liveKey());
+        if (verbose) {
+          console.log(JSON.stringify(config.get(), null, '  '));
+        }
+        return config;
+      })
+      .then(function(config) {
+        bundler
+          .process(config)
+          .pipe(filter.code())
+          .pipe(filter.createResponse())
+          .pipe(client);
+      });
   });
-  server.on('sourcemaps', function(client, config) {
-    console.log('generate sourcemaps for config:');
-    console.log(JSON.stringify(config, null, '  '));
-    return bundler
-      .process(config)
-      .pipe(filter.sourcemaps())
-      .pipe(filter.createResponse())
-      .pipe(client);
+  server.on('sourcemaps', function(client, jsonConfig) {
+    Promise
+      .try(function() {
+        return configCache.get(jsonConfig);
+      })
+      .then(function(config) {
+        console.log('generate sourcemaps for config (key:%s, liveKey:%s)', config.key(), config.liveKey());
+        if (verbose) {
+          console.log(JSON.stringify(config.get(), null, '  '));
+        }
+        return config;
+      })
+      .then(function(config) {
+        bundler
+          .process(config)
+          .pipe(filter.sourcemaps())
+          .pipe(filter.createResponse())
+          .pipe(client);
+      });
   });
   server.on('error', function(error) {
     server.stop();
