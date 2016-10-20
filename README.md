@@ -19,21 +19,23 @@ Usage
 ```bash
 $ cm-bundler
 
-  Usage: cm-bundler [options] [command]
-
-
-  Commands:
-
-    code <json>        generate the bundle code
-    sourcemaps <json>  generate the sourcemaps
-    checksum <json>    generate the bundle checksum
-    all <json>         generate the bundle code + inline sourcemaps
+  Usage: cm-bundler [options]
 
   Options:
 
-    -h, --help              output usage information
-    -V, --version           output the version number
-    -b, --benchmark <file>  benchmark output file
+    -h, --help           output usage information
+    -V, --version        output the version number
+    -s, --socket <file>  unix domain socket file (default: /var/run/cm-bundler.sock)
+    -v, --verbose        be more verbose
+```
+
+### Request
+
+```js
+{
+  "command": "sourcemaps" || "code",  // type of request
+  "config": {...}                        // see "JSON configuration"
+}
 ```
 
 #### JSON configuration
@@ -78,7 +80,6 @@ $ cm-bundler
 }
 ```
 
-
 ##### `sourceMaps.replace`
 
 This option replace all matching `file.path` in the sourcemaps, in addition to some built-in replacements:
@@ -89,22 +90,22 @@ The replacement could be defined by a regular expression or a string, in this ca
 Example: `/usr/foo/my/lib/file.js` file with `{"foo/lib/": ".*my/lib/"}` replacement will be visible in the browser as `foo/lib/file.js`.
 
 
-#### Benchmark option
+### Response
 
-`--benchmark <file>` could be used to generate benchmark report for each command.
-
-Reports give information about the time spent on each pipeline step, for example:
-
+**success**
+```js
+{
+   "content": "..."  // generated bundle content
+}
 ```
-start: 0.004s
-browserify: 2.727s
-sourcemap: 0.023s
-concat: 1.248s
-uglify: 23.183s
-remap: 0.002s
-write-sourcemap: 0.122s
-end: 0.107s
+
+**error**
+```js
+{
+   "error": "Error message"
+}
 ```
+
 
 Test
 ----
