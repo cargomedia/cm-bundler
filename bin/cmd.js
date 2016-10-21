@@ -52,6 +52,12 @@ try {
           .pipe(filter.code())
           .pipe(filter.createResponse())
           .pipe(client);
+      })
+      .catch(function(error) {
+        console.error(error.stack);
+        filter
+          .createErrorResponse(error)
+          .pipe(client);
       });
   });
   server.on('sourcemaps', function(client, jsonConfig) {
@@ -71,6 +77,12 @@ try {
           .process(config)
           .pipe(filter.sourcemaps())
           .pipe(filter.createResponse())
+          .pipe(client);
+      })
+      .catch(function(error) {
+        console.error(error.stack);
+        filter
+          .createErrorResponse(error)
           .pipe(client);
       });
   });
