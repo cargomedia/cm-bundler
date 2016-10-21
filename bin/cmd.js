@@ -12,6 +12,7 @@ try {
 
 
   var logger = require('../lib/util/logger');
+  var helper = require('../lib/util/helper');
   var logConfig = require('../lib/util/logger/config');
   var version = require('../package.json').version;
   var program = require('commander');
@@ -44,47 +45,45 @@ try {
 
   server = new UnixSocketServer(program.socket || '/var/run/cm-bundler.sock');
 
-  server.on('code', function(client, jsonConfig) {
-    logger.info('code requested');
-    logger.debug(JSON.stringify(jsonConfig, null, '  '));
+  var rid = 0;
+
+  function processRequest(client, jsonConfig, filterTransform, filterName) {
+    var requestId = helper.padding(++rid, 6);
+    var configId = helper.hash(jsonConfig).substr(0, 6);
+    var start = new Date();
+    logger.info('[%s:%s] generate %s...', requestId, configId, filterName);
+    logger.debug('[%s:%s] %s', requestId, configId, JSON.stringify(jsonConfig, null, '  '));
     Promise
       .try(function() {
         return configCache.get(jsonConfig);
       })
       .then(function(config) {
-        bundler
-          .process(config)
-          .pipe(filter.code())
-          .pipe(filter.createResponse())
-          .pipe(client);
+        return new Promise(function(resolve, reject) {
+          bundler
+            .process(config)
+            .pipe(filterTransform())
+            .pipe(filter.createResponse())
+            .pipe(client)
+            .on('error', reject)
+            .on('end', resolve);
+        });
+      })
+      .then(function() {
+        logger.info('[%s:%s] %s generated in %ss', requestId, configId, filterName, (new Date() - start) / 1000);
       })
       .catch(function(error) {
-        logger.error(error.stack);
+        logger.error('[%s:%s] %s', requestId, configId, error.stack);
         filter
           .createErrorResponse(error)
           .pipe(client);
       });
+  }
+
+  server.on('code', function(client, jsonConfig) {
+    processRequest(client, jsonConfig, filter.code, 'code');
   });
   server.on('sourcemaps', function(client, jsonConfig) {
-    logger.info('sourcemaps requested');
-    logger.debug(JSON.stringify(jsonConfig, null, '  '));
-    Promise
-      .try(function() {
-        return configCache.get(jsonConfig);
-      })
-      .then(function(config) {
-        bundler
-          .process(config)
-          .pipe(filter.sourcemaps())
-          .pipe(filter.createResponse())
-          .pipe(client);
-      })
-      .catch(function(error) {
-        logger.error(error.stack);
-        filter
-          .createErrorResponse(error)
-          .pipe(client);
-      });
+    processRequest(client, jsonConfig, filter.sourcemaps, 'sourcemaps');
   });
   server.on('error', function(error) {
     server.stop();
