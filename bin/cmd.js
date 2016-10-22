@@ -48,11 +48,11 @@ try {
 
   var rid = 0;
 
-  function processRequest(client, jsonConfig, filterTransform, filterName) {
+  function processRequest(command, client, jsonConfig, transform) {
     var requestId = helper.padding(++rid, 6);
     var configId = helper.hash(jsonConfig).substr(0, 6);
     var start = new Date();
-    logger.info('%s [%s]  %s requested', requestId, configId, filterName);
+    logger.info('%s [%s]  %s requested', requestId, configId, command);
     logger.debug('%s [%s] %s', requestId, configId, JSON.stringify(jsonConfig, null, '  '));
     Promise
       .try(function() {
@@ -62,8 +62,8 @@ try {
         return new Promise(function(resolve, reject) {
           var response = pipeline
             .obj(
-              bundler.process(config),
-              filterTransform(),
+              config.process(),
+              transform(),
               filter.createResponse()
             )
             .on('error', reject)
@@ -74,7 +74,7 @@ try {
         });
       })
       .then(function(config) {
-        logger.info('%s [%s] %s retrieved in %ss', requestId, config.toString(), filterName, (new Date() - start) / 1000);
+        logger.info('%s [%s] %s retrieved in %ss', requestId, config.toString(), command, (new Date() - start) / 1000);
       })
       .catch(function(error) {
         logger.error('%s [%s] %s', requestId, configId, error.stack);
@@ -85,10 +85,10 @@ try {
   }
 
   server.on('code', function(client, jsonConfig) {
-    processRequest(client, jsonConfig, filter.code, 'code');
+    processRequest('code', client, jsonConfig, filter.code);
   });
   server.on('sourcemaps', function(client, jsonConfig) {
-    processRequest(client, jsonConfig, filter.sourcemaps, 'sourcemaps');
+    processRequest('sourcemaps', client, jsonConfig, filter.sourcemaps);
   });
   server.on('error', function(error) {
     server.stop();
