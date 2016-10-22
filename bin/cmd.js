@@ -13,6 +13,7 @@ try {
 
   var logger = require('../lib/util/logger');
   var helper = require('../lib/util/helper');
+  var pipeline = require('pumpify');
   var logConfig = require('../lib/util/logger/config');
   var version = require('../package.json').version;
   var program = require('commander');
@@ -51,28 +52,32 @@ try {
     var requestId = helper.padding(++rid, 6);
     var configId = helper.hash(jsonConfig).substr(0, 6);
     var start = new Date();
-    logger.info('[%s:%s] generate %s...', requestId, configId, filterName);
-    logger.debug('[%s:%s] %s', requestId, configId, JSON.stringify(jsonConfig, null, '  '));
+    logger.info('%s [%s]  %s requested', requestId, configId, filterName);
+    logger.debug('%s [%s] %s', requestId, configId, JSON.stringify(jsonConfig, null, '  '));
     Promise
       .try(function() {
         return configCache.get(jsonConfig);
       })
       .then(function(config) {
         return new Promise(function(resolve, reject) {
-          bundler
-            .process(config)
-            .pipe(filterTransform())
-            .pipe(filter.createResponse())
-            .pipe(client)
+          var response = pipeline
+            .obj(
+              bundler.process(config),
+              filterTransform(),
+              filter.createResponse()
+            )
             .on('error', reject)
-            .on('end', resolve);
+            .on('finish', function() {
+              response.pipe(client);
+              resolve(config);
+            });
         });
       })
-      .then(function() {
-        logger.info('[%s:%s] %s generated in %ss', requestId, configId, filterName, (new Date() - start) / 1000);
+      .then(function(config) {
+        logger.info('%s [%s] %s retrieved in %ss', requestId, config.toString(), filterName, (new Date() - start) / 1000);
       })
       .catch(function(error) {
-        logger.error('[%s:%s] %s', requestId, configId, error.stack);
+        logger.error('%s [%s] %s', requestId, configId, error.stack);
         filter
           .createErrorResponse(error)
           .pipe(client);
