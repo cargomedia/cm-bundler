@@ -50,9 +50,9 @@ try {
 
   function processRequest(command, client, jsonConfig, transform) {
     var requestId = helper.padding(++rid, 6);
-    var configId = helper.hash(jsonConfig).substr(0, 6);
+    var configId = jsonConfig.bundleName || 'none';
     var start = new Date();
-    logger.info('%s [%s]  %s requested', requestId, configId, command);
+    logger.info('%s [%s] %s requested', requestId, configId, command);
     logger.debug('%s [%s] %s', requestId, configId, JSON.stringify(jsonConfig, null, '  '));
     Promise
       .try(function() {
@@ -77,7 +77,7 @@ try {
         logger.info('%s [%s] %s retrieved in %ss', requestId, config.toString(), command, (new Date() - start) / 1000);
       })
       .catch(function(error) {
-        logger.error('%s [%s] %s', requestId, configId, error.stack);
+        logger.error('%s [%s]\n%s', requestId, configId, error.stack);
         filter
           .createErrorResponse(error)
           .pipe(client);
