@@ -10,20 +10,23 @@ try {
     abort();
   });
 
-  var createNamespace = require('continuation-local-storage').createNamespace;
-  var session = createNamespace('cm-bundler.request.session');
+  var util = require('util');
+  var program = require('commander');
+  var pipeline = require('pumpify');
+  var cls = require('continuation-local-storage');
+  var clsPatcher = require('cls-bluebird');
   var Promise = require('bluebird');
-  require('cls-bluebird')(session);
 
   var logger = require('../lib/util/logger');
-  var helper = require('../lib/util/helper');
-  var pipeline = require('pumpify');
   var logConfig = require('../lib/util/logger/config');
   var version = require('../package.json').version;
-  var program = require('commander');
   var bundler = require('../lib/bundler');
   var filter = require('../lib/stream/filter');
   var UnixSocketServer = require('../lib/socket/server');
+
+  var session = cls.createNamespace('cm-bundler.request.session');
+  clsPatcher(session);
+
   var configCache = require('../lib/config/cache').getInstance();
 
   program
@@ -53,8 +56,7 @@ try {
   function processRequest(command, client, jsonConfig, transform) {
     var configId = jsonConfig.bundleName || 'none';
     var start = new Date();
-    logger.info('%s requested', command);
-    logger.debug('%s', JSON.stringify(jsonConfig, null, '  '));
+    logger.debug('%s requested', command);
     Promise
       .try(function() {
         return configCache.get(jsonConfig);
@@ -75,7 +77,12 @@ try {
         });
       })
       .then(function() {
-        logger.info('%s retrieved in %ss', command, (new Date() - start) / 1000);
+        var bundleName = session.get('bundleName');
+        var cacheConfig = session.get('cacheConfig');
+        var cacheStream = session.get('cacheStream');
+        logger.log('info', util.format('%s retrieved in %ss', command, (new Date() - start) / 1000), {
+          post: bundleName + (cacheConfig && cacheStream ? ':from cache' : '')
+        });
       })
       .catch(function(error) {
         logger.error('\n%s', error.stack);
@@ -88,14 +95,14 @@ try {
   var rid = 0;
   server.on('code', function(client, jsonConfig) {
     session.run(function() {
-      session.set('requestId', helper.padding(++rid, 6));
+      session.set('requestId', ++rid);
       session.set('bundleName', jsonConfig.bundleName || 'none');
       processRequest('code', client, jsonConfig, filter.code);
     });
   });
   server.on('sourcemaps', function(client, jsonConfig) {
     session.run(function() {
-      session.set('requestId', helper.padding(++rid, 6));
+      session.set('requestId', ++rid);
       session.set('bundleName', jsonConfig.bundleName || 'none');
       processRequest('sourcemaps', client, jsonConfig, filter.sourcemaps);
     });
