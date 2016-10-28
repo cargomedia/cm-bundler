@@ -10,6 +10,10 @@ try {
     abort();
   });
 
+  var createNamespace = require('continuation-local-storage').createNamespace;
+  var session = createNamespace('cm-bundler.request.session');
+  var Promise = require('bluebird');
+  require('cls-bluebird')(session);
 
   var logger = require('../lib/util/logger');
   var helper = require('../lib/util/helper');
@@ -19,7 +23,6 @@ try {
   var program = require('commander');
   var bundler = require('../lib/bundler');
   var filter = require('../lib/stream/filter');
-  var Promise = require('bluebird');
   var UnixSocketServer = require('../lib/socket/server');
   var configCache = require('../lib/config/cache').getInstance();
 
@@ -41,19 +44,17 @@ try {
   logConfig({
     level: verbose ? 'debug' : 'info',
     file: program.file,
-    noColor: program.noColor
+    noColor: program.noColor,
+    session: session
   });
 
   server = new UnixSocketServer(program.socket || '/var/run/cm-bundler.sock');
 
-  var rid = 0;
-
   function processRequest(command, client, jsonConfig, transform) {
-    var requestId = helper.padding(++rid, 6);
     var configId = jsonConfig.bundleName || 'none';
     var start = new Date();
-    logger.info('%s [%s] %s requested', requestId, configId, command);
-    logger.debug('%s [%s] %s', requestId, configId, JSON.stringify(jsonConfig, null, '  '));
+    logger.info('%s requested', command);
+    logger.debug('%s', JSON.stringify(jsonConfig, null, '  '));
     Promise
       .try(function() {
         return configCache.get(jsonConfig);
@@ -69,26 +70,35 @@ try {
             .on('error', reject)
             .on('finish', function() {
               response.pipe(client);
-              resolve(config);
+              resolve();
             });
         });
       })
-      .then(function(config) {
-        logger.info('%s [%s] %s retrieved in %ss', requestId, config.toString(), command, (new Date() - start) / 1000);
+      .then(function() {
+        logger.info('%s retrieved in %ss', command, (new Date() - start) / 1000);
       })
       .catch(function(error) {
-        logger.error('%s [%s]\n%s', requestId, configId, error.stack);
+        logger.error('\n%s', error.stack);
         filter
           .createErrorResponse(error)
           .pipe(client);
       });
   }
 
+  var rid = 0;
   server.on('code', function(client, jsonConfig) {
-    processRequest('code', client, jsonConfig, filter.code);
+    session.run(function() {
+      session.set('requestId', helper.padding(++rid, 6));
+      session.set('bundleName', jsonConfig.bundleName || 'none');
+      processRequest('code', client, jsonConfig, filter.code);
+    });
   });
   server.on('sourcemaps', function(client, jsonConfig) {
-    processRequest('sourcemaps', client, jsonConfig, filter.sourcemaps);
+    session.run(function() {
+      session.set('requestId', helper.padding(++rid, 6));
+      session.set('bundleName', jsonConfig.bundleName || 'none');
+      processRequest('sourcemaps', client, jsonConfig, filter.sourcemaps);
+    });
   });
   server.on('error', function(error) {
     server.stop();
