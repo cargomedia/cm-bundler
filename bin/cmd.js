@@ -31,7 +31,9 @@ try {
 
   program
     .version(version)
-    .option('-s, --socket <file>', 'unix domain socket file (default: /var/run/cm-bundler.sock)')
+    .option('-h, --host <host>', 'hostname (default: 0.0.0.0)')
+    .option('-p, --port <port>', 'port (default: 6644)')
+    .option('-s, --socket <file>', 'unix domain socket file')
     .option('-f, --file <file>', 'output logs to a file')
     .option('-nc, --no-color', 'output logs to standard output without colors')
     .option('-v, --verbose', 'be verbose')
@@ -43,6 +45,10 @@ try {
     return;
   }
 
+  program.host = program.host || '0.0.0.0';
+  program.port = program.port || 6644;
+
+
   verbose = program.verbose;
   logConfig({
     level: verbose ? 'debug' : 'info',
@@ -51,7 +57,16 @@ try {
     session: session
   });
 
-  server = new UnixSocketServer(program.socket || '/var/run/cm-bundler.sock');
+  if (program.socket) {
+    server = new UnixSocketServer({
+      socket: program.socket
+    });
+  } else {
+    server = new UnixSocketServer({
+      host: program.host,
+      port: program.port
+    });
+  }
 
   function processRequest(command, client, jsonConfig, transform) {
     var configId = jsonConfig.bundleName || 'none';
@@ -118,7 +133,11 @@ try {
   server
     .start()
     .then(function(server) {
-      logger.info('service listening to %s', server.address());
+      var addr = server.address();
+      if (typeof addr === 'object') {
+        addr = addr.address + ':' + addr.port;
+      }
+      logger.info('service listening to %s', addr);
     })
     .catch(function(error) {
       abort(error);
