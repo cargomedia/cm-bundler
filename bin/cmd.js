@@ -77,6 +77,7 @@ try {
         return configCache.get(jsonConfig);
       })
       .then(function(config) {
+        logger.debug(JSON.stringify(config.get(), null, '  '));
         return new Promise(function(resolve, reject) {
           var response = pipeline
             .obj(
