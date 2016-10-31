@@ -68,10 +68,10 @@ try {
     });
   }
 
-  function processRequest(command, client, jsonConfig, transform) {
+  function processRequest(client, jsonConfig, transform) {
     var configId = jsonConfig.bundleName || 'none';
     var start = new Date();
-    logger.debug('%s requested', command);
+    logger.debug('requested');
     Promise
       .try(function() {
         return configCache.get(jsonConfig);
@@ -92,11 +92,10 @@ try {
         });
       })
       .then(function() {
-        var bundleName = session.get('bundleName');
         var cacheConfig = session.get('cacheConfig');
         var cacheStream = session.get('cacheStream');
-        logger.log('info', util.format('%s retrieved in %ss', command, (new Date() - start) / 1000), {
-          post: bundleName + (cacheConfig && cacheStream ? ':from cache' : '')
+        logger.log('info', util.format('done in %sms', new Date() - start), {
+          post: cacheConfig && cacheStream ? 'from cache' : ''
         });
       })
       .catch(function(error) {
@@ -112,14 +111,14 @@ try {
     session.run(function() {
       session.set('requestId', ++rid);
       session.set('bundleName', jsonConfig.bundleName || 'none');
-      processRequest('code', client, jsonConfig, filter.code);
+      processRequest(client, jsonConfig, filter.code);
     });
   });
   server.on('sourcemaps', function(client, jsonConfig) {
     session.run(function() {
       session.set('requestId', ++rid);
       session.set('bundleName', jsonConfig.bundleName || 'none');
-      processRequest('sourcemaps', client, jsonConfig, filter.sourcemaps);
+      processRequest(client, jsonConfig, filter.sourcemaps);
     });
   });
   server.on('error', function(error) {
