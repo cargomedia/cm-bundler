@@ -10,27 +10,29 @@ try {
     abort();
   });
 
-  var util = require('util');
-  var program = require('commander');
-  var pipeline = require('pumpify');
   var cls = require('continuation-local-storage');
-  var clsPatcher = require('cls-bluebird');
   var Promise = require('bluebird');
-
-  var logger = require('../lib/util/logger');
-  var logConfig = require('../lib/util/logger/config');
-  var version = require('../package.json').version;
-  var bundler = require('../lib/bundler');
-  var filter = require('../lib/stream/filter');
-  var UnixSocketServer = require('../lib/socket/server');
-
+  var clsPatcher = require('cls-bluebird');
   var session = cls.createNamespace('cm-bundler.request.session');
   clsPatcher(session);
 
   var configCache = require('../lib/config/cache').getInstance();
 
+
+  var util = require('util');
+  var program = require('commander');
+  var pipeline = require('pumpify');
+
+  var logger = require('../lib/util/logger');
+  var logConfig = require('../lib/util/logger/config');
+  var bundler = require('../lib/bundler');
+  var filter = require('../lib/stream/filter');
+  var UnixSocketServer = require('../lib/socket/server');
+  var BundleConfig = require('../lib/config');
+
+
   program
-    .version(version)
+    .version(require('../package.json').version)
     .option('-h, --host <host>', 'hostname (default: 0.0.0.0)')
     .option('-p, --port <port>', 'port (default: 6644)')
     .option('-s, --socket <file>', 'unix domain socket file')
@@ -68,16 +70,20 @@ try {
     });
   }
 
-  function processRequest(client, jsonConfig, transform) {
-    var configId = jsonConfig.bundleName || 'none';
-    var start = new Date();
+  /**
+   * @param {Socket} client
+   * @param {BundleConfig} config
+   * @param {Transform} transform
+   */
+  function processRequest(client, config, transform) {
     logger.debug('requested');
+    var start = new Date();
     Promise
       .try(function() {
-        return configCache.get(jsonConfig);
+        return configCache.get(config);
       })
       .then(function(config) {
-        logger.debug(JSON.stringify(config.get(), null, '  '));
+        logger.debug('\n%s', JSON.stringify(config.get(), null, '  '));
         return new Promise(function(resolve, reject) {
           var response = pipeline
             .obj(
@@ -107,41 +113,53 @@ try {
       });
   }
 
-  var rid = 0;
-  server.on('code', function(client, jsonConfig) {
-    session.run(function() {
-      session.set('requestId', ++rid);
-      session.set('bundleName', jsonConfig.bundleName || 'none');
-      processRequest(client, jsonConfig, filter.code);
-    });
-  });
-  server.on('sourcemaps', function(client, jsonConfig) {
-    session.run(function() {
-      session.set('requestId', ++rid);
-      session.set('bundleName', jsonConfig.bundleName || 'none');
-      processRequest(client, jsonConfig, filter.sourcemaps);
-    });
-  });
-  server.on('error', function(error) {
-    server.stop();
-    abort(error);
-  });
-  server.on('stop', function(error) {
-    logger.info('stopping CM Bundler service...');
-  });
 
-  server
-    .start()
-    .then(function(server) {
-      var addr = server.address();
-      if (typeof addr === 'object') {
-        addr = addr.address + ':' + addr.port;
-      }
-      logger.info('service listening to %s', addr);
-    })
-    .catch(function(error) {
+  session.run(function() {
+    session.set('requestId', 'server');
+    session.bindEmitter(server);
+
+    var rid = 0;
+
+    server.on('code', function(client, jsonConfig) {
+      session.run(function() {
+        var config = new BundleConfig(jsonConfig);
+        session.set('requestId', ++rid);
+        session.set('config', config);
+        processRequest(client, config, filter.code);
+      });
+    });
+
+    server.on('sourcemaps', function(client, jsonConfig) {
+      session.run(function() {
+        var config = new BundleConfig(jsonConfig);
+        session.set('requestId', ++rid);
+        session.set('config', config);
+        processRequest(client, config, filter.sourcemaps);
+      });
+    });
+
+    server.on('error', function(error) {
+      server.stop();
       abort(error);
     });
+
+    server.on('stop', function(error) {
+      logger.info('stopping CM Bundler service...');
+    });
+
+    server
+      .start()
+      .then(function(server) {
+        var addr = server.address();
+        if (typeof addr === 'object') {
+          addr = addr.address + ':' + addr.port;
+        }
+        logger.info('service listening to %s', addr);
+      })
+      .catch(function(error) {
+        abort(error);
+      });
+  });
 
 } catch (error) {
   abort(error);
@@ -152,7 +170,8 @@ function abort(error, signal) {
     server.stop();
   }
   if (error) {
-    console.error(verbose ? error.stack : 'Error: ' + error.message);
+    var logError = logger ? logger.error : console.error;
+    logError(verbose ? error.stack : 'Error: ' + error.message);
     process.exit(1);
   } else if (signal) {
     process.exit(signal + 128);
