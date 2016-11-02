@@ -39,6 +39,7 @@ try {
     .option('-f, --file <file>', 'output logs to a file')
     .option('-nc, --no-color', 'output logs to standard output without colors')
     .option('-v, --verbose', 'be verbose')
+    .option('-vv, --more-verbose', 'be more verbose')
     .parse(process.argv);
 
   if (program.args.length > 2) {
@@ -83,7 +84,9 @@ try {
         return configCache.get(config);
       })
       .then(function(config) {
-        logger.debug('\n%s', JSON.stringify(config.get(), null, '  '));
+        if (program.moreVerbose) {
+          logger.debug('\n%s', JSON.stringify(config.get(), null, '  '));
+        }
         return new Promise(function(resolve, reject) {
           var response = pipeline
             .obj(
