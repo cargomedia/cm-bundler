@@ -25,11 +25,6 @@ try {
 
   var logger = require('../lib/util/logger');
   var logConfig = require('../lib/util/logger/config');
-  var bundler = require('../lib/bundler');
-  var filter = require('../lib/stream/filter');
-  var UnixSocketServer = require('../lib/socket/server');
-  var BundleConfig = require('../lib/config');
-
 
   program
     .version(require('../package.json').version)
@@ -59,6 +54,11 @@ try {
     noColor: program.noColor,
     session: session
   });
+
+  var bundler = require('../lib/bundler');
+  var filter = require('../lib/stream/filter');
+  var UnixSocketServer = require('../lib/socket/server');
+  var BundleConfig = require('../lib/config');
 
   if (program.socket) {
     server = new UnixSocketServer({
