@@ -2,6 +2,7 @@ var vm = require('vm');
 var path = require('path');
 var assert = require('chai').assert;
 var deap = require('deap');
+var Promise = require('bluebird');
 var browserify = require('browserify');
 var convert = require('convert-source-map');
 
@@ -12,8 +13,8 @@ var lib2Dir = path.join(dataDir, 'lib2');
 
 var bundler = require('../../lib/bundler');
 
-var executeInVM = function(src) {
-  var context = {
+var executeInVM = function(src, context) {
+  var context = deap({
     console: console,
     callCount: {},
     loadCount: {},
@@ -29,7 +30,7 @@ var executeInVM = function(src) {
     getCountCalled: function(name) {
       return name in context.callCount ? context.callCount[name] : 0;
     }
-  };
+  }, context || {});
   vm.runInNewContext(src, context);
   return context;
 };
@@ -68,9 +69,6 @@ describe('bundler: browserify', function() {
         libDir,
         lib2Dir
       ],
-      "sourceMaps": {
-        "enabled": true
-      },
       "baseDir": baseDir
     }).bundle(function(error, src) {
       assert.ifError(error);
@@ -153,6 +151,71 @@ describe('bundler: browserify', function() {
 
       done();
     });
+  });
+
+  it('ignoreMissing', function(done) {
+
+    (
+      new Promise(function(resolve, reject) {
+        bundler.browserify({
+          "entries": [],
+          "libraries": [],
+          "paths": [],
+          "ignoreMissing": true,
+          "content": [
+            {
+              "path": "defined/outside",
+              "source": "moduleLoaded('defined/outside'); module.exports=function(){moduleCalled('defined/outside');};",
+              "execute": false,
+              "expose": true
+            }
+          ],
+          "baseDir": baseDir
+        }).bundle(function(error, src) {
+          if (error) {
+            reject(error);
+          }
+          assert.ifError(error);
+          assert.isObject(src);
+          assert.ok(src.length > 0);
+          resolve(src);
+        });
+      })
+    )
+      .then(function(previousCode) {
+        bundler.browserify({
+          "entries": [],
+          "libraries": [],
+          "paths": [],
+          "ignoreMissing": true,
+          "content": [
+            {
+              "path": "foo",
+              "source": "moduleLoaded('foo'); module.exports=function(){moduleCalled('foo'); var out = require('defined/outside'); out();};",
+              "execute": false,
+              "expose": true
+            }
+          ],
+          "baseDir": baseDir
+        }).bundle(function(error, src) {
+          assert.ifError(error);
+          assert.isObject(src);
+          assert.ok(src.length > 0);
+          var context = executeInVM(Buffer.concat([previousCode, src]));
+
+          assert.typeOf(context.require, 'function');
+          assert.equal(context.getCountLoaded('defined/outside'), 0);
+          assert.equal(context.getCountLoaded('foo'), 0);
+
+          var foo = context.require('foo');
+          assert.equal(context.getCountLoaded('foo'), 1);
+
+          foo();
+          assert.equal(context.getCountCalled('foo'), 1);
+          assert.equal(context.getCountCalled('defined/outside'), 1);
+          done();
+        });
+      });
   });
 });
 
