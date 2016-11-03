@@ -17,7 +17,7 @@ try {
   var util = require('util');
   var program = require('commander');
   var pipeline = require('pumpify');
-
+  var Promise = require('bluebird');
   var logger = require('../lib/util/logger');
   var logConfig = require('../lib/util/logger/config');
 
