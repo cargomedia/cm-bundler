@@ -9,7 +9,7 @@ var dataDir = path.join(__dirname, '..', '_data');
 var baseDir = path.join(dataDir, 'base');
 var libDir = path.join(dataDir, 'lib');
 
-var libraries = require('../../lib/bundler/libraries');
+var libraries = require('../../lib/bundler/extra/libraries');
 
 var executeInVM = function(src) {
   var context = {
