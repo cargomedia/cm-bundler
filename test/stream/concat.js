@@ -18,7 +18,6 @@ describe('stream: concat', function() {
         concat([])
       )
       .pipe(though.obj(function(file, encoding) {
-        assert.isUndefined(file.sourceMap);
         assert.equal(file.contents.toString(encoding), '');
         done();
       }));
@@ -34,7 +33,7 @@ describe('stream: concat', function() {
         concat([path.join(dataDir, 'concat', '*.js')])
       )
       .pipe(though.obj(function(file, encoding) {
-        assert.isUndefined(file.sourceMap);
+        assert.isObject(file.sourceMap);
         assert.deepEqual(file.contents.toString(encoding).split("\n"), [
           '//_010', '',
           '//001', '',
@@ -54,7 +53,7 @@ describe('stream: concat', function() {
         concat([])
       )
       .pipe(though.obj(function(file, encoding) {
-        assert.isUndefined(file.sourceMap);
+        assert.isObject(file.sourceMap);
         assert.equal(file.contents.toString(encoding), '//stream');
         done();
       }));
@@ -76,7 +75,7 @@ describe('stream: concat', function() {
         concat([path.join(dataDir, 'concat', '*.js')])
       )
       .pipe(though.obj(function(file, encoding) {
-        assert.isUndefined(file.sourceMap);
+        assert.isObject(file.sourceMap);
         assert.deepEqual(file.contents.toString(encoding).split("\n"), [
           '//_010', '',
           '//001', '',
@@ -102,7 +101,7 @@ describe('stream: concat', function() {
         concat([path.join(dataDir, 'concat', '**/*.js')])
       )
       .pipe(though.obj(function(file, encoding) {
-        assert.isUndefined(file.sourceMap);
+        assert.isObject(file.sourceMap);
         assert.deepEqual(file.contents.toString(encoding).split("\n"), [
           '//_001/001', '',
           '//_001/010', '',
@@ -134,7 +133,7 @@ describe('stream: concat', function() {
         sourcemaps.init({loadMaps: true})
       )
       .pipe(
-        concat([path.join(dataDir, 'concat', '*.js')], true)
+        concat([path.join(dataDir, 'concat', '*.js')])
       )
       .pipe(though.obj(function(file, encoding) {
         assert.deepEqual(file.contents.toString(encoding).split("\n"), [
