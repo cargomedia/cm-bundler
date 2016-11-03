@@ -13,28 +13,6 @@ var lib2Dir = path.join(dataDir, 'lib2');
 
 var bundler = require('../../lib/bundler');
 
-var executeInVM = function(src, context) {
-  var context = deap({
-    console: console,
-    callCount: {},
-    loadCount: {},
-    moduleLoaded: function(name) {
-      context.loadCount[name] = context.getCountLoaded(name) + 1;
-    },
-    getCountLoaded: function(name) {
-      return name in context.loadCount ? context.loadCount[name] : 0;
-    },
-    moduleCalled: function(name) {
-      context.callCount[name] = context.getCountCalled(name) + 1;
-    },
-    getCountCalled: function(name) {
-      return name in context.callCount ? context.callCount[name] : 0;
-    }
-  }, context || {});
-  vm.runInNewContext(src, context);
-  return context;
-};
-
 
 describe('bundler: browserify', function() {
 
@@ -153,11 +131,11 @@ describe('bundler: browserify', function() {
     });
   });
 
-  it('ignoreMissing', function(done) {
+  it('ignoreMissing', function() {
 
-    (
-      new Promise(function(resolve, reject) {
-        bundler.browserify({
+    return Promise
+      .try(function(resolve, reject) {
+        var b = bundler.browserify({
           "entries": [],
           "libraries": [],
           "paths": [],
@@ -171,17 +149,10 @@ describe('bundler: browserify', function() {
             }
           ],
           "baseDir": baseDir
-        }).bundle(function(error, src) {
-          if (error) {
-            reject(error);
-          }
-          assert.ifError(error);
-          assert.isObject(src);
-          assert.ok(src.length > 0);
-          resolve(src);
         });
+
+        return bundlePromise(b);
       })
-    )
       .then(function(previousCode) {
         bundler.browserify({
           "entries": [],
@@ -213,9 +184,38 @@ describe('bundler: browserify', function() {
           foo();
           assert.equal(context.getCountCalled('foo'), 1);
           assert.equal(context.getCountCalled('defined/outside'), 1);
-          done();
         });
       });
   });
 });
 
+
+function executeInVM(src, context) {
+  context = deap({
+    console: console,
+    callCount: {},
+    loadCount: {},
+    moduleLoaded: function(name) {
+      context.loadCount[name] = context.getCountLoaded(name) + 1;
+    },
+    getCountLoaded: function(name) {
+      return name in context.loadCount ? context.loadCount[name] : 0;
+    },
+    moduleCalled: function(name) {
+      context.callCount[name] = context.getCountCalled(name) + 1;
+    },
+    getCountCalled: function(name) {
+      return name in context.callCount ? context.callCount[name] : 0;
+    }
+  }, context || {});
+  vm.runInNewContext(src, context);
+  return context;
+}
+
+function bundlePromise(browserify) {
+  return new Promise(function(resolve, reject) {
+    browserify.bundle(function(error, src) {
+      error && reject(error) || resolve(src);
+    });
+  });
+}
