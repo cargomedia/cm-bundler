@@ -88,16 +88,22 @@ try {
           logger.debug('\n%s', JSON.stringify(config.get(), null, '  '));
         }
         return new Promise(function(resolve, reject) {
-          var response = pipeline
-            .obj(
-              config.process(),
-              transform(),
-              filter.createResponse()
-            )
+          var build = pipeline.obj(
+            config.process(),
+            transform(),
+            filter.createResponse()
+          );
+          session.bindEmitter(build);
+
+          build
             .on('error', reject)
             .on('finish', function() {
-              response.pipe(client);
-              resolve();
+              var response = build.pipe(client).on('finish', resolve);
+              session.bindEmitter(response);
+              response
+                .on('error', function(error) {
+                  logger.error('\n%s', error.stack);
+                });
             });
         });
       })
@@ -110,9 +116,11 @@ try {
       })
       .catch(function(error) {
         logger.error('\n%s', error.stack);
-        filter
-          .createErrorResponse(error)
-          .pipe(client);
+        var errorResponse = filter.createErrorResponse(error).pipe(client);
+        session.bindEmitter(errorResponse);
+        errorResponse.on('error', function(error) {
+          logger.error('\n%s', error.stack);
+        });
       });
   }
 
