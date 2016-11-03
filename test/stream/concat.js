@@ -1,11 +1,14 @@
 var path = require('path');
 var assert = require('chai').assert;
-var concat = require('../../lib/stream/concat');
-var dataDir = path.join(__dirname, '../_data');
 
+var Promise = require('bluebird');
 var though = require('through2');
 var VinylFile = require('vinyl');
 var sourcemaps = require('gulp-sourcemaps');
+var helper = require('../../lib/util/helper');
+
+var concat = require('../../lib/stream/concat');
+var dataDir = path.join(__dirname, '../_data');
 
 
 describe('stream: concat', function() {
@@ -172,5 +175,75 @@ describe('stream: concat', function() {
     }));
 
     stream.push(null);
+  });
+
+  it('cache', function() {
+    var cache = concat.cache;
+    var patterns = [path.join(dataDir, 'concat', '*.js')];
+    cache.clear();
+
+    return Promise
+      .try(function() {
+        var stream = though.obj();
+        assert.isNull(cache.get(patterns));
+        var test = stream
+          .pipe(concat(patterns))
+          .pipe(though.obj(function(file, _, next) {
+            assert.isObject(cache.get(patterns));
+            this.push(file);
+            next();
+          }));
+        stream.push(null);
+        stream.end();
+        return helper.streamPromise(test);
+      })
+      .then(function() {
+        var stream = though.obj();
+        var data = cache.get(patterns);
+        assert.isObject(data);
+        data.file.contentParts.push(new Buffer('//from cache'));
+        var test = stream
+          .pipe(concat(patterns))
+          .pipe(though.obj(function(file, _, next) {
+            assert.isObject(cache.get(patterns));
+            assert.match(file.contents.toString('utf-8'), /\/\/from cache$/);
+            this.push(file);
+            next();
+          }));
+        stream.push(null);
+        stream.end();
+        return helper.streamPromise(test);
+      });
+  });
+
+  it('cache invalidation', function() {
+    var cache = concat.cache;
+    var patterns = [path.join(dataDir, 'concat', '*.js')];
+    cache.clear();
+
+    return Promise
+      .try(function() {
+        var stream = though.obj();
+        assert.isNull(cache.get(patterns));
+        var test = stream
+          .pipe(concat(patterns))
+          .pipe(though.obj(function(file, _, next) {
+            assert.isObject(cache.get(patterns));
+            this.push(file);
+            next();
+          }));
+        stream.push(null);
+        stream.end();
+        return helper.streamPromise(test);
+      })
+      .then(function() {
+        assert.isObject(cache.get(patterns));
+
+        cache.invalidate(path.join(dataDir, 'concat', 'not', 'matching.js'));
+        assert.isObject(cache.get(patterns));
+
+        cache.invalidate(path.join(dataDir, 'concat', 'matching.js'));
+        assert.isNull(cache.get(patterns));
+      });
   });
 });
