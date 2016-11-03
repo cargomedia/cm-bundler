@@ -1,5 +1,6 @@
 var path = require('path');
 var assert = require('chai').assert;
+var EventEmitter = require('events').EventEmitter;
 var Promise = require('bluebird');
 var through = require('through2');
 
@@ -164,7 +165,7 @@ describe('config', function() {
       });
   });
 
-  it('process concurrent', function() {
+  it('process concurrency', function() {
     var config = new BundleConfig({
       concat: [path.join(dataDir, 'concat', '*.js')]
     });
@@ -209,5 +210,100 @@ describe('config', function() {
         assert.deepEqual(file1, file2);
       }
     );
+  });
+
+  it('process renew', function(done) {
+    var config = new BundleConfig({
+      concat: [path.join(dataDir, 'concat', '*.js')]
+    }, dataDir, null, null, 10);
+
+    config.initialize();
+
+    var processCount = 0;
+    var invalidates = [];
+
+    var emitter = new EventEmitter();
+    var process = config.process;
+    config.process = function() {
+      processCount++;
+      var processStream = process.apply(config, arguments);
+      emitter.emit('stream', processStream);
+      return processStream;
+    };
+    var _invalidate = config._invalidate;
+    config._invalidate = function(file) {
+      invalidates.push(file);
+      return _invalidate.apply(config, arguments);
+    };
+
+
+    emitter.on('stream', function(stream) {
+      assert.equal(processCount, 1);
+      stream.on('finish', function() {
+        assert.deepEqual(invalidates, [
+          path.join(dataDir, 'foo1.js'),
+          path.join(dataDir, 'foo2.js'),
+          path.join(dataDir, 'foo3.js')
+        ]);
+        done();
+      });
+    });
+
+    config._renew('change', 'foo1.js');
+    config._renew('change', 'foo2.js');
+    config._renew('change', 'foo3.js');
+  });
+
+  it('process renew / delayed', function(done) {
+    var config = new BundleConfig({
+      concat: [path.join(dataDir, 'concat', '*.js')]
+    }, dataDir, null, null, 10);
+
+    config.initialize();
+
+    var processCount = 0;
+    var invalidates = [];
+
+    var emitter = new EventEmitter();
+    var process = config.process;
+    config.process = function() {
+      processCount++;
+      var processStream = process.apply(config, arguments);
+      emitter.emit('stream', processStream);
+      return processStream;
+    };
+    var _invalidate = config._invalidate;
+    config._invalidate = function(file) {
+      invalidates.push(file);
+      return _invalidate.apply(config, arguments);
+    };
+
+
+    emitter.on('stream', function(stream) {
+      if (processCount == 1) {
+        stream.on('finish', function() {
+          assert.deepEqual(invalidates, [
+            path.join(dataDir, 'foo1.js'),
+            path.join(dataDir, 'foo2.js')
+          ]);
+        });
+      }
+      if (processCount == 2) {
+        stream.on('finish', function() {
+          assert.deepEqual(invalidates, [
+            path.join(dataDir, 'foo1.js'),
+            path.join(dataDir, 'foo2.js'),
+            path.join(dataDir, 'foo3.js')
+          ]);
+        });
+        done();
+      }
+    });
+
+    config._renew('change', 'foo1.js');
+    config._renew('change', 'foo2.js');
+    setTimeout(function() {
+      config._renew('change', 'foo3.js');
+    }, 30);
   });
 });
