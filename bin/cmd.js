@@ -13,7 +13,6 @@ try {
   var session = require('../lib/session');
   var configCache = require('../lib/config/cache').getInstance();
 
-
   var util = require('util');
   var program = require('commander');
   var pipeline = require('pumpify');
@@ -27,9 +26,9 @@ try {
     .option('-p, --port <port>', 'port (default: 6644)')
     .option('-s, --socket <file>', 'unix domain socket file')
     .option('-f, --file <file>', 'output logs to a file')
-    .option('-nc, --no-color', 'output logs to standard output without colors')
+    .option('-C, --no-color', 'output logs to standard output without colors')
     .option('-v, --verbose', 'be verbose')
-    .option('-vv, --more-verbose', 'be more verbose')
+    .option('-M, --more-verbose', 'be more verbose')
     .parse(process.argv);
 
   if (program.args.length > 2) {
@@ -41,12 +40,12 @@ try {
   program.host = program.host || '0.0.0.0';
   program.port = program.port || 6644;
 
+  verbose = program.verbose || program.moreVerbose;
 
-  verbose = program.verbose;
   logConfig({
     level: verbose ? 'debug' : 'info',
     file: program.file,
-    noColor: program.noColor,
+    color: program.color,
     session: session
   });
 
@@ -118,7 +117,6 @@ try {
         });
       });
   }
-
 
   session.run(function() {
     session.set('requestId', 'server');
