@@ -67,7 +67,7 @@ describe('bundler: add entries', function() {
       .process(browserify(options))
       .bundle(function(error, src) {
         assert.ifError(error);
-      assert.isObject(src);
+        assert.instanceOf(src, Buffer);
       assert.ok(src.length > 0);
 
       var context = executeInVM(src);
@@ -92,7 +92,7 @@ describe('bundler: add entries', function() {
       .process(browserify(options))
       .bundle(function(error, src) {
         assert.ifError(error);
-      assert.isObject(src);
+        assert.instanceOf(src, Buffer);
       assert.ok(src.length > 0);
 
       var context = executeInVM(src);
@@ -121,7 +121,7 @@ describe('bundler: add entries', function() {
       .process(browserify(options))
       .bundle(function(error, src) {
         assert.ifError(error);
-      assert.isObject(src);
+        assert.instanceOf(src, Buffer);
       assert.ok(src.length > 0);
 
       var context = executeInVM(src);

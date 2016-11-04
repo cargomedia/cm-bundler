@@ -50,7 +50,7 @@ describe('bundler: browserify', function() {
       "baseDir": baseDir
     }).bundle(function(error, src) {
       assert.ifError(error);
-      assert.isObject(src);
+      assert.instanceOf(src, Buffer);
       assert.ok(src.length > 0);
       var str = src.toString('utf-8');
       var map = convert.fromSource(str);
@@ -131,10 +131,10 @@ describe('bundler: browserify', function() {
     });
   });
 
-  it('ignoreMissing', function() {
+  it('ignoreMissing', function(done) {
 
-    return Promise
-      .try(function(resolve, reject) {
+    Promise
+      .try(function() {
         var b = bundler.browserify({
           "entries": [],
           "libraries": [],
@@ -170,7 +170,7 @@ describe('bundler: browserify', function() {
           "baseDir": baseDir
         }).bundle(function(error, src) {
           assert.ifError(error);
-          assert.isObject(src);
+          assert.instanceOf(src, Buffer);
           assert.ok(src.length > 0);
           var context = executeInVM(Buffer.concat([previousCode, src]));
 
@@ -184,6 +184,8 @@ describe('bundler: browserify', function() {
           foo();
           assert.equal(context.getCountCalled('foo'), 1);
           assert.equal(context.getCountCalled('defined/outside'), 1);
+
+          done();
         });
       });
   });
