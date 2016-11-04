@@ -13,12 +13,15 @@ try {
   var session = require('../lib/session');
   var configCache = require('../lib/bundler/config/cache').getInstance();
 
+  var _ = require('underscore');
   var util = require('util');
   var program = require('commander');
   var pipeline = require('pumpify');
   var Promise = require('bluebird');
   var logger = require('../lib/util/logger');
+  var config = require('../lib/config');
   var logConfig = require('../lib/util/logger/config');
+
 
   program
     .version(require('../package.json').version)
@@ -38,41 +41,58 @@ try {
     return;
   }
 
-  program.host = program.host || '0.0.0.0';
-  program.port = program.port || 6644;
+  if (program.config) {
+    config.require(program.config);
+  }
+  config.merge({
+    bundler: {
+      port: program.port || config.get('bundler.port'),
+      host: program.host || config.get('bundler.host'),
+      socket: program.socket || config.get('bundler.socket')
+    },
+    log: {
+      file: program.logFile || config.get('log.file'),
+      level: (program.verbose || program.moreVerbose) ? 'debug' : config.get('log.level'),
+      color: !_.isUndefined(program.color) ? program.color : config.get('bundler.socket')
+    }
+  });
+
+  logConfig(config.get('log'));
 
   verbose = program.verbose || program.moreVerbose;
-
-  logConfig({
-    level: verbose ? 'debug' : 'info',
-    file: program.file,
-    color: program.color,
-    session: session
-  });
 
   var bundler = require('../lib/bundler');
   var filter = require('../lib/stream/filter');
   var UnixSocketServer = require('../lib/socket/server');
   var BundleConfig = require('../lib/bundler/config');
 
-  if (program.socket) {
+  if (config.get('bundler.socket')) {
     server = new UnixSocketServer({
-      socket: program.socket
+      socket: config.get('bundler.socket')
     });
   } else {
     server = new UnixSocketServer({
-      host: program.host,
-      port: program.port
+      host: config.get('bundler.host'),
+      port: config.get('bundler.port')
     });
   }
 
+  var rid = 0;
+
   /**
    * @param {Socket} client
-   * @param {BundleConfig} config
+   * @param {BundleConfig~config} jsonConfig
    * @param {Transform} transform
    */
-  function processRequest(client, config, transform) {
+  function processRequest(client, jsonConfig, transform) {
     logger.debug('requested');
+
+    var config = new BundleConfig(
+      jsonConfig, null, null, config.get('bundler.timeout'), config.get('bundler.updateDelay')
+    );
+    session.set('requestId', ++rid);
+    session.set('config', config);
+
     var start = new Date();
     Promise
       .try(function() {
@@ -123,22 +143,14 @@ try {
     session.set('requestId', 'server');
     session.bindEmitter(server);
 
-    var rid = 0;
-
     server.on('code', function(client, jsonConfig) {
       session.run(function() {
-        var config = new BundleConfig(jsonConfig);
-        session.set('requestId', ++rid);
-        session.set('config', config);
-        processRequest(client, config, filter.code);
+        processRequest(client, jsonConfig, filter.code);
       });
     });
 
     server.on('sourcemaps', function(client, jsonConfig) {
       session.run(function() {
-        var config = new BundleConfig(jsonConfig);
-        session.set('requestId', ++rid);
-        session.set('config', config);
         processRequest(client, config, filter.sourcemaps);
       });
     });
