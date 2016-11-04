@@ -29,6 +29,10 @@ module.exports = {
     concat: {
       max: 50,
       maxAge: 60 * 60 * 1000
+    },
+    browserify: {
+      max: 1000,
+      maxAge: 60 * 60 * 1000
     }
   }
 };

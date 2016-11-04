@@ -30,9 +30,9 @@ describe('bundler: cache', function() {
         return bundlePromise(b);
       })
       .then(function() {
-        assert.deepEqual(Object.keys(cache._cache), [
-          path.join(baseDir, 'foo/file1.js'),
-          path.join(baseDir, 'foo/file2.js')
+        assert.deepEqual(cache._cache.keys(), [
+          path.join(baseDir, 'foo/file2.js'),
+          path.join(baseDir, 'foo/file1.js')
         ]);
       })
       .then(function() {
@@ -41,8 +41,8 @@ describe('bundler: cache', function() {
         }, cache.prepare());
 
         assert.deepEqual(Object.keys(config.cache), [
-          path.join(baseDir, 'foo/file1.js'),
-          path.join(baseDir, 'foo/file2.js')
+          path.join(baseDir, 'foo/file2.js'),
+          path.join(baseDir, 'foo/file1.js')
         ]);
 
         _.each(config.cache, function(entry) {
@@ -62,18 +62,19 @@ describe('bundler: cache', function() {
         return bundlePromise(b);
       })
       .then(function() {
-        assert.deepEqual(Object.keys(cache._cache), [
-          path.join(baseDir, 'foo/file1.js'),
-          path.join(baseDir, 'foo/file2.js')
+        assert.deepEqual(cache._cache.keys(), [
+          path.join(baseDir, 'foo/file2.js'),
+          path.join(baseDir, 'foo/file1.js')
         ]);
       })
   });
 
   it('invalidate', function() {
-    cache.clear();
 
     return Promise
       .try(function() {
+        cache.clear();
+
         var config = deap({
           basedir: baseDir
         }, cache.prepare());
@@ -85,9 +86,9 @@ describe('bundler: cache', function() {
         return bundlePromise(b);
       })
       .then(function() {
-        assert.deepEqual(Object.keys(cache._cache), [
-          path.join(baseDir, 'foo/file1.js'),
-          path.join(baseDir, 'foo/file2.js')
+        assert.deepEqual(cache._cache.keys(), [
+          path.join(baseDir, 'foo/file2.js'),
+          path.join(baseDir, 'foo/file1.js')
         ]);
       })
       .then(function() {
@@ -123,9 +124,9 @@ describe('bundler: cache', function() {
         return bundlePromise(b);
       })
       .then(function() {
-        assert.deepEqual(Object.keys(cache._cache), [
-          path.join(baseDir, 'foo/file1.js'),
-          path.join(baseDir, 'foo/file2.js')
+        assert.deepEqual(cache._cache.keys(), [
+          path.join(baseDir, 'foo/file2.js'),
+          path.join(baseDir, 'foo/file1.js')
         ]);
       });
   });
