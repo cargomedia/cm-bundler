@@ -11,7 +11,7 @@ try {
   });
 
   var session = require('../lib/session');
-  var configCache = require('../lib/config/cache').getInstance();
+  var configCache = require('../lib/bundler/config/cache').getInstance();
 
   var util = require('util');
   var program = require('commander');
@@ -24,8 +24,9 @@ try {
     .version(require('../package.json').version)
     .option('-h, --host <host>', 'hostname (default: 0.0.0.0)')
     .option('-p, --port <port>', 'port (default: 6644)')
+    .option('-c, --config <file>', 'config file (JSON format)')
     .option('-s, --socket <file>', 'unix domain socket file')
-    .option('-f, --file <file>', 'output logs to a file')
+    .option('-l, --log-file <file>', 'output logs to a file')
     .option('-C, --no-color', 'output logs to standard output without colors')
     .option('-v, --verbose', 'be verbose')
     .option('-M, --more-verbose', 'be more verbose')
@@ -52,7 +53,7 @@ try {
   var bundler = require('../lib/bundler');
   var filter = require('../lib/stream/filter');
   var UnixSocketServer = require('../lib/socket/server');
-  var BundleConfig = require('../lib/config');
+  var BundleConfig = require('../lib/bundler/config');
 
   if (program.socket) {
     server = new UnixSocketServer({

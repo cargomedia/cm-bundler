@@ -4,7 +4,7 @@ var EventEmitter = require('events').EventEmitter;
 var Promise = require('bluebird');
 var through = require('through2');
 
-var BundleConfig = require('../../lib/config');
+var BundleConfig = require('../../lib/bundler/config');
 var helper = require('../../lib/util/helper');
 
 
