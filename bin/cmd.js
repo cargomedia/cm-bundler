@@ -85,18 +85,18 @@ try {
    * @param {Transform} transform
    */
   function processRequest(client, jsonConfig, transform) {
-    logger.debug('requested');
-
-    var config = new BundleConfig(
+    var bundleConfig = new BundleConfig(
       jsonConfig, null, null, config.get('bundler.timeout'), config.get('bundler.updateDelay')
     );
+
     session.set('requestId', ++rid);
-    session.set('config', config);
+    session.set('config', bundleConfig);
+    logger.debug('requested');
 
     var start = new Date();
     Promise
       .try(function() {
-        return configCache.get(config);
+        return configCache.get(bundleConfig);
       })
       .then(function(config) {
         if (program.moreVerbose) {
@@ -151,7 +151,7 @@ try {
 
     server.on('sourcemaps', function(client, jsonConfig) {
       session.run(function() {
-        processRequest(client, config, filter.sourcemaps);
+        processRequest(client, jsonConfig, filter.sourcemaps);
       });
     });
 

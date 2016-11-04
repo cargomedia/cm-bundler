@@ -14,7 +14,7 @@ module.exports = {
   },
   log: {
     file: null,
-    level: 'error',
+    level: 'info',
     color: true
   },
   watcher: {                            // see https://github.com/paulmillr/chokidar#persistence
@@ -22,12 +22,12 @@ module.exports = {
   },
   cache: {                              // see https://github.com/isaacs/node-lru-cache
     config: {
-      max: 50,
+      max: 12,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       timeout: 5000                     // max time to create + watch a config
     },
     concat: {
-      max: 50,
+      max: 12,
       maxAge: 60 * 60 * 1000
     },
     browserify: {
