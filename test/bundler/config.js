@@ -64,7 +64,6 @@ describe('bundler: BundlerConfig', function() {
         "ignoreMissing": true,
         "paths": ["foo"],
         "content": [{"source": "foobar"}],
-        "uglify": false,
         "watch": [],
         "libraries": [],
         "entries": [],
@@ -114,7 +113,7 @@ describe('bundler: BundlerConfig', function() {
 
   it('process', function() {
     var config = new BundleConfig({
-      content: [{path: 'foo', source: '//foo'}]
+      content: [{path: 'foo', source: 'var foo=100;'}]
     });
 
     return Promise
@@ -124,7 +123,7 @@ describe('bundler: BundlerConfig', function() {
       .timeout(100)
       .then(function(file) {
         var result = file.contents.toString('utf-8');
-        assert.match(result, /\/\/foo/);
+        assert.match(result, /foo=100/);
         assert.match(result, /require/);
       });
   });
