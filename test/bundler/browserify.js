@@ -76,6 +76,9 @@ describe('bundler: browserify', function() {
         );
       });
 
+      assert.match(map.sourcemap.sourcesContent[1], /foo\/file1/);
+      assert.match(map.sourcemap.sourcesContent[1], /exports = function/);
+
       var context = executeInVM(src);
       assert.typeOf(context.require, 'function');
       // entries
