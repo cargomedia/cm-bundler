@@ -4,6 +4,7 @@ var EventEmitter = require('events').EventEmitter;
 var Promise = require('bluebird');
 var through = require('through2');
 
+var bundler = require('../../lib/bundler');
 var BundleConfig = require('../../lib/bundler/config');
 var helper = require('../../lib/util/helper');
 
@@ -18,6 +19,8 @@ var concatDir = path.join(dataDir, 'concat');
 describe('bundler: BundlerConfig', function() {
 
   it('instantiation', function() {
+    bundler.clearCache();
+
     var config = new BundleConfig({bundleName: 'foo'});
     var data = config.get();
     delete data.bundleName;
@@ -73,6 +76,7 @@ describe('bundler: BundlerConfig', function() {
   });
 
   it('watch patterns', function() {
+    bundler.clearCache();
     var config = new BundleConfig({
       bundleName: 'foo',
       paths: [libDir, lib2Dir],
@@ -112,6 +116,7 @@ describe('bundler: BundlerConfig', function() {
   });
 
   it('process', function() {
+    bundler.clearCache();
     var config = new BundleConfig({
       content: [{path: 'foo', source: 'var foo=100;'}]
     });
@@ -129,6 +134,7 @@ describe('bundler: BundlerConfig', function() {
   });
 
   it('process failed', function(done) {
+    bundler.clearCache();
     var config = new BundleConfig({
       content: [{path: 'foo', source: 'require("not/defined")'}]
     });
@@ -146,6 +152,7 @@ describe('bundler: BundlerConfig', function() {
   });
 
   it('process failed / timeout', function(done) {
+    bundler.clearCache();
     var config = new BundleConfig({}, null, null, 5);
 
     config._process = function() {
@@ -165,6 +172,7 @@ describe('bundler: BundlerConfig', function() {
   });
 
   it('process concurrency', function() {
+    bundler.clearCache();
     var config = new BundleConfig({
       concat: [path.join(dataDir, 'concat', '*.js')]
     });
@@ -212,6 +220,7 @@ describe('bundler: BundlerConfig', function() {
   });
 
   it('process renew', function(done) {
+    bundler.clearCache();
     var config = new BundleConfig({
       concat: [path.join(dataDir, 'concat', '*.js')]
     }, dataDir, null, null, 10);
@@ -254,6 +263,7 @@ describe('bundler: BundlerConfig', function() {
   });
 
   it('process renew / delayed', function(done) {
+    bundler.clearCache();
     var config = new BundleConfig({
       concat: [path.join(dataDir, 'concat', '*.js')]
     }, dataDir, null, null, 10);

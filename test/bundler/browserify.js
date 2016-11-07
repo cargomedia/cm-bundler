@@ -17,6 +17,8 @@ var bundler = require('../../lib/bundler');
 describe('bundler: browserify', function() {
 
   it('full', function(done) {
+    bundler.clearCache();
+
     bundler.browserify({
       "entries": [
         "foo/file2.js",
@@ -135,6 +137,7 @@ describe('bundler: browserify', function() {
   });
 
   it('ignoreMissing', function(done) {
+    bundler.clearCache();
 
     Promise
       .try(function() {
