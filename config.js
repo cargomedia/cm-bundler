@@ -35,7 +35,7 @@ module.exports = {
       timeout: 5000                     // max time to create + watch a config
     },
     concat: {
-      max: 12,
+      max: 1000,
       maxAge: 60 * 60 * 1000
     },
     browserify: {
