@@ -10,7 +10,7 @@ var browserify = require('browserify');
 var dataDir = path.join(__dirname, '..', '_data');
 var baseDir = path.join(dataDir, 'base');
 
-var cache = require('../../lib/bundler/extra/cache');
+var cache = require('../../lib/bundler/plugins/cache');
 
 describe('bundler: cache', function() {
 
@@ -19,39 +19,35 @@ describe('bundler: cache', function() {
 
     return Promise
       .try(function() {
-        var config = deap({
+        var b = browserify({
           basedir: baseDir
-        }, cache.prepare());
-
-        var b = browserify(config);
+        });
         b.add('foo/file2.js');
-        cache.process(b);
+        b.plugin(cache);
 
         return bundlePromise(b);
       })
       .then(function() {
-        assert.deepEqual(cache._cache.keys(), [
+        assert.deepEqual(cache.keys(), [
           path.join(baseDir, 'foo/file2.js'),
           path.join(baseDir, 'foo/file1.js')
         ]);
       })
       .then(function() {
-        var config = deap({
+        var b = browserify({
           basedir: baseDir
-        }, cache.prepare());
+        });
+        b.add('foo/file2.js');
+        b.plugin(cache);
 
-        assert.deepEqual(Object.keys(config.cache), [
+        assert.deepEqual(Object.keys(b._mdeps.cache), [
           path.join(baseDir, 'foo/file2.js'),
           path.join(baseDir, 'foo/file1.js')
         ]);
 
-        _.each(config.cache, function(entry) {
+        _.each(b._mdeps.cache, function(entry) {
           entry.source += '//from cache';
         });
-
-        var b = browserify(config);
-        b.add('foo/file2.js');
-        cache.process(b);
 
         b.pipeline.get('deps').push(through.obj(function(row, enc, next) {
           assert.match(row.source, /\/\/from cache$/);
@@ -62,7 +58,7 @@ describe('bundler: cache', function() {
         return bundlePromise(b);
       })
       .then(function() {
-        assert.deepEqual(cache._cache.keys(), [
+        assert.deepEqual(cache.keys(), [
           path.join(baseDir, 'foo/file2.js'),
           path.join(baseDir, 'foo/file1.js')
         ]);
@@ -75,18 +71,16 @@ describe('bundler: cache', function() {
       .try(function() {
         cache.clear();
 
-        var config = deap({
+        var b = browserify({
           basedir: baseDir
-        }, cache.prepare());
-
-        var b = browserify(config);
+        });
         b.add('foo/file2.js');
-        cache.process(b);
+        b.plugin(cache);
 
         return bundlePromise(b);
       })
       .then(function() {
-        assert.deepEqual(cache._cache.keys(), [
+        assert.deepEqual(cache.keys(), [
           path.join(baseDir, 'foo/file2.js'),
           path.join(baseDir, 'foo/file1.js')
         ]);
@@ -95,21 +89,19 @@ describe('bundler: cache', function() {
 
         cache.invalidate(path.join(baseDir, 'foo/file2.js'));
 
-        var config = deap({
+        var b = browserify({
           basedir: baseDir
-        }, cache.prepare());
+        });
+        b.add('foo/file2.js');
+        b.plugin(cache);
 
-        assert.deepEqual(Object.keys(config.cache), [
+        assert.deepEqual(Object.keys(b._mdeps.cache), [
           path.join(baseDir, 'foo/file1.js')
         ]);
 
-        _.each(config.cache, function(entry) {
+        _.each(b._mdeps.cache, function(entry) {
           entry.source += '//from cache';
         });
-
-        var b = browserify(config);
-        b.add('foo/file2.js');
-        cache.process(b);
 
         b.pipeline.get('deps').push(through.obj(function(row, enc, next) {
           if (row.file == path.join(baseDir, 'foo/file2.js')) {
@@ -124,7 +116,7 @@ describe('bundler: cache', function() {
         return bundlePromise(b);
       })
       .then(function() {
-        assert.deepEqual(cache._cache.keys(), [
+        assert.deepEqual(cache.keys(), [
           path.join(baseDir, 'foo/file2.js'),
           path.join(baseDir, 'foo/file1.js')
         ]);
