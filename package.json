@@ -35,6 +35,7 @@
     "read-only-stream": "^2.0.0",
     "semaphore": "^1.0.5",
     "through2": "^2.0.1",
+    "uglify-js": "^2.7.4",
     "underscore": "^1.8.3",
     "vinyl-buffer": "^1.0.0",
     "vinyl-fs": "^2.4.3",

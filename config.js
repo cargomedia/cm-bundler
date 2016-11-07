@@ -20,6 +20,14 @@ module.exports = {
   watcher: {                            // see https://github.com/paulmillr/chokidar#persistence
     enabled: true
   },
+  uglify: {                             // see https://github.com/mishoo/UglifyJS2#api-reference
+    mangle: false,
+    compress: false,
+    output: {
+      quote_keys: true,
+      beautify: false
+    }
+  },
   cache: {                              // see https://github.com/isaacs/node-lru-cache
     config: {
       max: 12,
