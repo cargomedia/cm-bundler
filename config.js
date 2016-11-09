@@ -18,9 +18,10 @@ module.exports = {
     color: true
   },
   watcher: {                            // see https://github.com/paulmillr/chokidar#persistence
-    enabled: true
+    enabled: true                       // cm-bundler specific
   },
   uglify: {                             // see https://github.com/mishoo/UglifyJS2#api-reference
+    enabled: true,                      // cm-bundler specific
     mangle: false,
     compress: false,
     output: {
