@@ -90,7 +90,8 @@ module.exports = {
 
 ```js
 {
-  "command": "sourcemaps" || "code",  // type of request
+  "command": "sourcemaps" || "code",     // type of request
+  "name": "bundle name",                 // use mainly in logs
   "config": {...}                        // see "JSON configuration"
 }
 ```
@@ -101,7 +102,6 @@ _Each request must be terminated by a [End-of-Transmission character][eot] (`U+0
 
 ```js
 {
-  "bundleName": "my-bundle.js", // bundle filename (output from bundler pipe)  
   "watch": [                    // watched glob patterns
     "path/to/bar.js",
     "path/lib/**/*.js"

@@ -81,12 +81,13 @@ try {
 
   /**
    * @param {Socket} client
+   * @param {String} name
    * @param {BundleConfig~config} jsonConfig
    * @param {Transform} transform
    */
-  function processRequest(client, jsonConfig, transform) {
+  function processRequest(client, name, jsonConfig, transform) {
     var bundleConfig = new BundleConfig(
-      jsonConfig, null, config.get('bundler.timeout'), config.get('bundler.updateDelay')
+      jsonConfig, name, null, config.get('bundler.timeout'), config.get('bundler.updateDelay')
     );
 
     session.set('requestId', ++rid);
@@ -143,15 +144,15 @@ try {
     session.set('requestId', 'server');
     session.bindEmitter(server);
 
-    server.on('code', function(client, jsonConfig) {
+    server.on('code', function(client, name, jsonConfig) {
       session.run(function() {
-        processRequest(client, jsonConfig, filter.code);
+        processRequest(client, name, jsonConfig, filter.code);
       });
     });
 
-    server.on('sourcemaps', function(client, jsonConfig) {
+    server.on('sourcemaps', function(client, name, jsonConfig) {
       session.run(function() {
-        processRequest(client, jsonConfig, filter.sourcemaps);
+        processRequest(client, name, jsonConfig, filter.sourcemaps);
       });
     });
 
