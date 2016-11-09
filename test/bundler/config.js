@@ -79,39 +79,16 @@ describe('bundler: BundlerConfig', function() {
     bundler.clearCache();
     var config = new BundleConfig({
       bundleName: 'foo',
-      paths: [libDir, lib2Dir],
-      entries: [
-        path.join(baseDir, 'foo/file1.js'),
-        path.join(baseDir, 'foo/file1.js'),
-        path.join(baseDir, 'inexistent.js')
-      ],
-      libraries: [
-        path.join(dataDir, 'lib2/baz/file1.js'),
-        path.join(dataDir, 'lib2/baz/inexistent.js')
-      ],
       watch: [
         path.join(concatDir, '*.js'),
         path.join(libDir, '**/*.js'),
         path.join(concatDir, 'inexistent/*.js')
       ]
-    }, baseDir, ['js', 'ejs']);
+    }, baseDir);
 
     assert.deepEqual(config._getPatterns(), [
-      path.join(libDir, '**/*.js'),
-      path.join(lib2Dir, '**/*.js'),
-      path.join(lib2Dir, '**/*.ejs'),
-      path.join(lib2Dir, 'baz/file1.js'),
-      path.join(baseDir, 'foo/file1.js'),
-      path.join(concatDir, '*.js')
-    ]);
-
-    var config = new BundleConfig({
-      bundleName: 'foo',
-      paths: [libDir, lib2Dir]
-    }, baseDir, ['ejs']);
-
-    assert.deepEqual(config._getPatterns(), [
-      path.join(lib2Dir, '**/*.ejs')
+      path.join(concatDir, '*.js'),
+      path.join(libDir, '**/*.js')
     ]);
   });
 
@@ -153,7 +130,7 @@ describe('bundler: BundlerConfig', function() {
 
   it('process failed / timeout', function(done) {
     bundler.clearCache();
-    var config = new BundleConfig({}, null, null, 5);
+    var config = new BundleConfig({}, null, 5);
 
     config._process = function() {
       return through.obj();
@@ -223,7 +200,7 @@ describe('bundler: BundlerConfig', function() {
     bundler.clearCache();
     var config = new BundleConfig({
       concat: [path.join(dataDir, 'concat', '*.js')]
-    }, dataDir, null, null, 10);
+    }, dataDir, null, 10);
 
     config.initialize();
 
@@ -266,7 +243,7 @@ describe('bundler: BundlerConfig', function() {
     bundler.clearCache();
     var config = new BundleConfig({
       concat: [path.join(dataDir, 'concat', '*.js')]
-    }, dataDir, null, null, 10);
+    }, dataDir, null, 10);
 
     config.initialize();
 

@@ -86,7 +86,7 @@ try {
    */
   function processRequest(client, jsonConfig, transform) {
     var bundleConfig = new BundleConfig(
-      jsonConfig, null, null, config.get('bundler.timeout'), config.get('bundler.updateDelay')
+      jsonConfig, null, config.get('bundler.timeout'), config.get('bundler.updateDelay')
     );
 
     session.set('requestId', ++rid);
