@@ -59,8 +59,8 @@ describe('bundler: BundlerConfig', function() {
         "sourceMaps": {
           "replace": {
             "foo": "bar",
-            ".cm-bundler/require": "(^|.*/)browser-pack/_prelude.js",
-            ".cm-bundler": "(^|.*/)cm-bundler",
+            '.cm-bundler/require': '^.*/?browser-pack/_prelude.js',
+            '.cm-bundler': '^.*/?cm-bundler',
             "": /\.js$/
           }
         },
