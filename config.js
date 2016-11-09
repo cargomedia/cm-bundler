@@ -21,7 +21,7 @@ module.exports = {
     enabled: true                       // cm-bundler specific
   },
   uglify: {                             // see https://github.com/mishoo/UglifyJS2#api-reference
-    enabled: true,                      // cm-bundler specific
+    enabled: false,                      // cm-bundler specific
     mangle: false,
     compress: false,
     output: {
