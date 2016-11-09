@@ -14,7 +14,7 @@ var dataDir = path.join(__dirname, '../_data');
 describe('stream: concat', function() {
 
   it('none', function(done) {
-    concat.clear();
+    concat.cache.clear();
     var stream = though.obj();
 
     stream
@@ -30,7 +30,7 @@ describe('stream: concat', function() {
   });
 
   it('no input', function(done) {
-    concat.clear();
+    concat.cache.clear();
     var stream = though.obj();
 
     stream
@@ -40,9 +40,9 @@ describe('stream: concat', function() {
       .pipe(though.obj(function(file, encoding) {
         assert.isObject(file.sourceMap);
         assert.deepEqual(file.contents.toString(encoding).split("\n"), [
-          'var str="_010";', '',
-          'var str="001";', '',
-          'var str="010";', ''
+          "var str = '_010';", '',
+          "var str = '001';", '',
+          "var str = '010';", ''
         ]);
         done();
       }));
@@ -51,7 +51,7 @@ describe('stream: concat', function() {
   });
 
   it('no concat', function(done) {
-    concat.clear();
+    concat.cache.clear();
     var stream = though.obj();
 
     stream
@@ -74,7 +74,7 @@ describe('stream: concat', function() {
   });
 
   it('simple', function(done) {
-    concat.clear();
+    concat.cache.clear();
     var stream = though.obj();
 
     stream
@@ -84,9 +84,9 @@ describe('stream: concat', function() {
       .pipe(though.obj(function(file, encoding) {
         assert.isObject(file.sourceMap);
         assert.deepEqual(file.contents.toString(encoding).split("\n"), [
-          'var str="_010";', '',
-          'var str="001";', '',
-          'var str="010";', '',
+          "var str = '_010';", '',
+          "var str = '001';", '',
+          "var str = '010';", '',
           '//stream'
         ]);
         done();
@@ -102,7 +102,7 @@ describe('stream: concat', function() {
   });
 
   it('recursive', function(done) {
-    concat.clear();
+    concat.cache.clear();
     var stream = though.obj();
 
     stream
@@ -112,14 +112,17 @@ describe('stream: concat', function() {
       .pipe(though.obj(function(file, encoding) {
         assert.isObject(file.sourceMap);
         assert.deepEqual(file.contents.toString(encoding).split("\n"), [
-          'var str="_001/001";', '',
-          'var str="_001/010";', '',
-          'var str="_010";', '',
-          'var str="001";', '',
-          'var str="010";', '',
-          'var str="sub/001";', '',
-          'var str="sub/010";', '',
-          'var str="foo/bar/baz";function foo(){return str.replace(/b/,"p")}', '',
+          "var str = '_001/001';", '',
+          "var str = '_001/010';", '',
+          "var str = '_010';", '',
+          "var str = '001';", '',
+          "var str = '010';", '',
+          "var str = 'sub/001';", '',
+          "var str = 'sub/010';", '',
+          "var str = 'foo/bar/baz';",
+          "function foo() {",
+          "  return str.replace(/b/, 'p');",
+          "}", '',
           '//stream'
         ]);
         done();
@@ -136,7 +139,7 @@ describe('stream: concat', function() {
 
 
   it('sourcemaps', function(done) {
-    concat.clear();
+    concat.cache.clear();
 
     var stream = though.obj();
 
@@ -149,9 +152,9 @@ describe('stream: concat', function() {
       )
       .pipe(though.obj(function(file, encoding) {
         assert.deepEqual(file.contents.toString(encoding).split("\n"), [
-          'var str="_010";', '',
-          'var str="001";', '',
-          'var str="010";', '',
+          "var str = '_010';", '',
+          "var str = '001';", '',
+          "var str = '010';", '',
           '//stream'
         ]);
 
@@ -187,19 +190,18 @@ describe('stream: concat', function() {
   });
 
   it('cache', function() {
-    concat.clear();
-    var cache = concat._cache();
+    var cache = concat.cache;
     var patterns = [path.join(dataDir, 'concat', '*.js')];
+    cache.clear();
 
     return Promise
       .try(function() {
         var stream = though.obj();
-        assert.equal(cache.keys().length, 0);
-
+        assert.isNull(cache.get(patterns));
         var test = stream
           .pipe(concat(patterns))
           .pipe(though.obj(function(file, _, next) {
-            assert.equal(cache.keys().length, 3);
+            assert.isObject(cache.get(patterns));
             this.push(file);
             next();
           }));
@@ -209,15 +211,13 @@ describe('stream: concat', function() {
       })
       .then(function() {
         var stream = though.obj();
-
-        cache.forEach(function(file) {
-          file.contents = Buffer.concat([file.contents, new Buffer('//from cache')]);
-        });
-
+        var data = cache.get(patterns);
+        assert.isObject(data);
+        data.file.contentParts.push(new Buffer('//from cache'));
         var test = stream
           .pipe(concat(patterns))
           .pipe(though.obj(function(file, _, next) {
-            assert.equal(cache.keys().length, 3);
+            assert.isObject(cache.get(patterns));
             assert.match(file.contents.toString('utf-8'), /\/\/from cache$/);
             this.push(file);
             next();
@@ -229,18 +229,18 @@ describe('stream: concat', function() {
   });
 
   it('cache invalidation', function() {
-    concat.clear();
-    var cache = concat._cache();
+    var cache = concat.cache;
     var patterns = [path.join(dataDir, 'concat', '*.js')];
+    cache.clear();
 
     return Promise
       .try(function() {
         var stream = though.obj();
-        assert.equal(cache.keys().length, 0);
+        assert.isNull(cache.get(patterns));
         var test = stream
           .pipe(concat(patterns))
           .pipe(though.obj(function(file, _, next) {
-            assert.equal(cache.keys().length, 3);
+            assert.isObject(cache.get(patterns));
             this.push(file);
             next();
           }));
@@ -249,13 +249,13 @@ describe('stream: concat', function() {
         return helper.streamPromise(test);
       })
       .then(function() {
-        assert.equal(cache.keys().length, 3);
+        assert.isObject(cache.get(patterns));
 
-        concat.invalidate(path.join(dataDir, 'concat/not/matching.js'));
-        assert.equal(cache.keys().length, 3);
+        cache.invalidate(path.join(dataDir, 'concat', 'not', 'matching.js'));
+        assert.isObject(cache.get(patterns));
 
-        concat.invalidate(path.join(dataDir, 'concat/010.js'));
-        assert.equal(cache.keys().length, 2);
+        cache.invalidate(path.join(dataDir, 'concat', 'matching.js'));
+        assert.isNull(cache.get(patterns));
       });
   });
 });
