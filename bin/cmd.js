@@ -25,7 +25,7 @@ try {
 
   program
     .version(require('../package.json').version)
-    .option('-h, --host <host>', 'hostname (default: 0.0.0.0)')
+    .option('-H, --host <host>', 'hostname (default: 0.0.0.0)')
     .option('-p, --port <port>', 'port (default: 6644)')
     .option('-c, --config <file>', 'config file (JSON format)')
     .option('-s, --socket <file>', 'unix domain socket file')
