@@ -21,9 +21,8 @@ describe('bundler: BundlerConfig', function() {
   it('instantiation', function() {
     bundler.clearCache();
 
-    var config = new BundleConfig({bundleName: 'foo'});
+    var config = new BundleConfig({}, 'foo');
     var data = config.get();
-    delete data.bundleName;
     var id = helper.hash(data);
     var key = helper.hash(id + helper.hash({}));
 
@@ -42,7 +41,6 @@ describe('bundler: BundlerConfig', function() {
 
   it('merge', function() {
     var config = new BundleConfig({
-      bundleName: 'foo',
       sourceMaps: {
         replace: {
           'foo': 'bar'
@@ -51,11 +49,10 @@ describe('bundler: BundlerConfig', function() {
       ignoreMissing: true,
       paths: ['foo'],
       content: [{source: 'foobar'}]
-    }, '/custom/baseDir');
+    }, null, '/custom/baseDir');
 
     assert.deepEqual(config.get(), {
         "baseDir": "/custom/baseDir",
-        "bundleName": "foo",
         "sourceMaps": {
           "replace": {
             "foo": "bar",
@@ -130,7 +127,7 @@ describe('bundler: BundlerConfig', function() {
 
   it('process failed / timeout', function(done) {
     bundler.clearCache();
-    var config = new BundleConfig({}, null, 5);
+    var config = new BundleConfig({}, 'foo', null, 5);
 
     config._process = function() {
       return through.obj();
@@ -200,7 +197,7 @@ describe('bundler: BundlerConfig', function() {
     bundler.clearCache();
     var config = new BundleConfig({
       concat: [path.join(dataDir, 'concat', '*.js')]
-    }, dataDir, null, 10);
+    }, 'foo', dataDir, null, 10);
 
     config.initialize();
 
@@ -243,7 +240,7 @@ describe('bundler: BundlerConfig', function() {
     bundler.clearCache();
     var config = new BundleConfig({
       concat: [path.join(dataDir, 'concat', '*.js')]
-    }, dataDir, null, 10);
+    }, 'foo', dataDir, null, 10);
 
     config.initialize();
 
