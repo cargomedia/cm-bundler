@@ -141,7 +141,7 @@ try {
   }
 
   session.run(function() {
-    session.set('requestId', 'server');
+    session.set('requestId', 'service');
     session.bindEmitter(server);
 
     server.on('code', function(client, name, jsonConfig) {
@@ -162,7 +162,7 @@ try {
     });
 
     server.on('stop', function(error) {
-      logger.info('stopping CM Bundler service...');
+      logger.info('stopping...');
     });
 
     server
@@ -172,7 +172,7 @@ try {
         if (typeof addr === 'object') {
           addr = addr.address + ':' + addr.port;
         }
-        logger.info('service listening to %s', addr);
+        logger.info('listening to %s', addr);
       })
       .catch(function(error) {
         abort(error);
