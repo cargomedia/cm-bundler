@@ -2,9 +2,9 @@ var assert = require('chai').assert;
 var path = require('path');
 var through = require('through2');
 var VinylFile = require('vinyl');
+var concat = require('gulp-concat');
 var sourcemaps = require('gulp-sourcemaps');
 
-var concat = require('../../lib/stream/concat');
 var remap = require('../../lib/stream/remap');
 
 describe('stream: remap', function() {
@@ -25,7 +25,7 @@ describe('stream: remap', function() {
     var stream = through.obj();
     stream
       .pipe(sourcemaps.init({loadMaps: true}))
-      .pipe(concat([]))
+      .pipe(concat('foo'))
       .pipe(remap())
       .pipe(through.obj(function(file) {
         assert.isObject(file.sourceMap);
@@ -45,7 +45,7 @@ describe('stream: remap', function() {
     var stream = through.obj();
     stream
       .pipe(sourcemaps.init())
-      .pipe(concat([]))
+      .pipe(concat('foo'))
       .pipe(remap({
         'bar/': '.*foo/',
         'baz/': 'foz/'
@@ -74,7 +74,7 @@ describe('stream: remap', function() {
     var stream = through.obj();
     stream
       .pipe(sourcemaps.init())
-      .pipe(concat([]))
+      .pipe(concat('foo'))
       .pipe(remap({
         'bar': /foo/g
       }))
@@ -101,7 +101,7 @@ describe('stream: remap', function() {
 
     stream
       .pipe(sourcemaps.init())
-      .pipe(concat([]))
+      .pipe(concat('foo'))
       .pipe(remap({'bar/': '.*foo/'}))
       .on('error', function(error) {
         assert.match(error.message, /Failed to remap the source, `bar\/file1.js` path already exists!/);
