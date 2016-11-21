@@ -10,7 +10,8 @@ module.exports = {
     host: '0.0.0.0',
     socket: null,                       // serve through a unix domain socket (host:port ignored)
     timeout: 10000,                     // max time to build a bundle
-    updateDelay: 100                    // delay between 2 bundle renew due to file changes (only if watcher is enabled)
+    updateDelay: 100,                   // delay between 2 bundle renew due to file changes (only if watcher is enabled)
+    baseDir: process.cwd(),             // base directory used to resolve relative file paths
   },
   log: {
     file: null,

@@ -27,6 +27,7 @@ try {
     .version(require('../package.json').version)
     .option('-H, --host <host>', 'hostname (default: 0.0.0.0)')
     .option('-p, --port <port>', 'port (default: 6644)')
+    .option('-b, --base-dir <port>', 'base directory')
     .option('-c, --config <file>', 'config file (JSON format)')
     .option('-s, --socket <file>', 'unix domain socket file')
     .option('-l, --log-file <file>', 'output logs to a file')
@@ -48,7 +49,8 @@ try {
     bundler: {
       port: program.port || config.get('bundler.port'),
       host: program.host || config.get('bundler.host'),
-      socket: program.socket || config.get('bundler.socket')
+      socket: program.socket || config.get('bundler.socket'),
+      baseDir: program.baseDir || config.get('bundler.baseDir'),
     },
     log: {
       file: program.logFile || config.get('log.file'),
@@ -87,7 +89,7 @@ try {
    */
   function processRequest(client, name, jsonConfig, transform) {
     var bundleConfig = new BundleConfig(
-      jsonConfig, name, null, config.get('bundler.timeout'), config.get('bundler.updateDelay')
+      jsonConfig, name, config.get('bundler.baseDir'), config.get('bundler.timeout'), config.get('bundler.updateDelay')
     );
 
     session.set('requestId', ++rid);
