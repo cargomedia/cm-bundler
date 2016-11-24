@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-var verbose = true;
+var logLevel = 'debug';
+var verboseLevel = ['error', 'info', 'debug', 'silly'];
 var server = null;
 var logger = null;
+
 
 try {
   process.on('SIGINT', function() {
@@ -10,6 +12,11 @@ try {
   process.on('SIGTERM', function() {
     abort();
   });
+
+
+  function increaseVerbosity(v, total) {
+    return total + 1 < verboseLevel.length ? total + 1 : total;
+  }
 
   var _ = require('underscore');
   var program = require('commander');
@@ -22,13 +29,12 @@ try {
     .version(require('../package.json').version)
     .option('-H, --host <host>', 'hostname (default: 0.0.0.0)')
     .option('-p, --port <port>', 'port (default: 6644)')
-    .option('-b, --base-dir <port>', 'base directory')
+    .option('-b, --base-dir <dir>', 'base directory')
     .option('-c, --config <file>', 'config file (JSON format)')
     .option('-s, --socket <file>', 'unix domain socket file')
     .option('-l, --log-file <file>', 'output logs to a file')
     .option('-C, --no-color', 'output logs to standard output without colors')
-    .option('-v, --verbose', 'be verbose')
-    .option('-M, --more-verbose', 'be more verbose')
+    .option('-v, --verbose', 'be verbose (-v,-vv,-vvv)', increaseVerbosity, 0)
     .parse(process.argv);
 
   if (program.args.length > 2) {
@@ -40,6 +46,8 @@ try {
   if (program.config) {
     config.require(program.config);
   }
+
+  logLevel = program.verbose > 0 ? verboseLevel[program.verbose] : config.get('log.level');
   config.merge({
     bundler: {
       port: program.port || config.get('bundler.port'),
@@ -49,14 +57,12 @@ try {
     },
     log: {
       file: program.logFile || config.get('log.file'),
-      level: (program.verbose || program.moreVerbose) ? 'debug' : config.get('log.level'),
-      color: !_.isUndefined(program.color) ? program.color : config.get('bundler.socket')
+      color: !_.isUndefined(program.color) ? program.color : config.get('bundler.socket'),
+      level: logLevel,
     }
   });
 
   logConfig(config.get('log'));
-
-  verbose = program.verbose || program.moreVerbose;
 
   session.run(function() {
     var logger = require('../lib/util/logger');
@@ -108,7 +114,7 @@ function abort(error, signal) {
   }
   if (error) {
     var logError = logger ? logger.error : console.error;
-    logError(verbose ? error.stack : 'Error: ' + error.message);
+    logError('debug' === logLevel ? error.stack : 'Error: ' + error.message);
     process.exit(1);
   } else if (signal) {
     process.exit(signal + 128);

@@ -28,12 +28,12 @@ $ cm-bundler --help
     -V, --version          output the version number
     -H, --host <host>      hostname (default: 0.0.0.0)
     -p, --port <port>      port (default: 6644)
+    -b, --base-dir <dir>   base directory
     -c, --config <file>    config file (JSON format)
     -s, --socket <file>    unix domain socket file
     -l, --log-file <file>  output logs to a file
     -C, --no-color         output logs to standard output without colors
-    -v, --verbose          be verbose
-    -M, --more-verbose     be more verbose
+    -v, --verbose          be verbose (-v,-vv,-vvv)
 ```
 
 

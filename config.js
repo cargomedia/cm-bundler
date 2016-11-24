@@ -15,7 +15,7 @@ module.exports = {
   },
   log: {
     file: null,
-    level: 'info',
+    level: 'error',
     color: true
   },
   watcher: {                            // see https://github.com/paulmillr/chokidar#persistence
