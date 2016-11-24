@@ -33,8 +33,7 @@ module.exports = {
   cache: {                              // see https://github.com/isaacs/node-lru-cache
     config: {
       max: 12,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      timeout: 5000                     // max time to create + watch a config
+      maxAge: 7 * 24 * 60 * 60 * 1000
     },
     concat: {
       max: 1000,
