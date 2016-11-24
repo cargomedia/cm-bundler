@@ -1,0 +1,81 @@
+{
+  "type": "object",
+  "properties": {
+    "baseDir": {
+      "type": "string"
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ignoreMissing": {
+      "type": "boolean"
+    },
+    "watch": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sourceMaps": {
+      "type": "object",
+      "properties": {
+        "replace": {
+          "type": "object",
+          "patternProperties": {
+            ".*$": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "execute": {
+            "type": "boolean"
+          },
+          "expose": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "source"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "libraries": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "concat": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

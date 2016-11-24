@@ -9,7 +9,7 @@ var dataDir = path.join(__dirname, '../_data');
 var baseDir = path.join(dataDir, 'base');
 var libDir = path.join(dataDir, 'lib');
 
-var content = require('../../lib/bundler/content');
+var content = require('../../lib/bundler/plugins/content');
 
 var executeInVM = function(src) {
   var context = {
@@ -33,134 +33,130 @@ var executeInVM = function(src) {
   return context;
 };
 
-describe('bundler: add content', function() {
+describe('bundler: content', function() {
 
   it('wrong content', function() {
     assert.throws(function() {
-      content.prepare([{}]);
+      var b = browserify();
+      b.plugin(content, {contents: [{}]});
+      b.bundle();
     }, /content.path property required./);
 
     assert.throws(function() {
-      content.prepare([{path: 'foo'}]);
+      var b = browserify();
+      b.plugin(content, {contents: [{path: 'foo'}]});
+      b.bundle();
     }, /content.source property required./);
   });
 
   it('minimal', function(done) {
-    var options = deap(
-      {},
-      content.prepare([
-        {path: 'foo', source: 'moduleLoaded("foo");'}
-      ])
-    );
 
-    content
-      .process(browserify(options))
-      .bundle(function(error, src) {
-        var context = executeInVM(src);
-        var str = src.toString('utf-8');
-        assert.ifError(error);
-        assert.ok(src.length > 0);
-        assert.match(str, /moduleLoaded/);
-        assert.equal(context.getCountLoaded('foo'), 1);
-        assert.isUndefined(context.require);
-        done();
-      });
+    var b = browserify();
+    b.plugin(content, {
+      contents: [
+        {path: 'foo', source: 'moduleLoaded("foo");'}
+      ]
+    });
+
+    b.bundle(function(error, src) {
+      var context = executeInVM(src);
+      var str = src.toString('utf-8');
+      assert.ifError(error);
+      assert.ok(src.length > 0);
+      assert.match(str, /moduleLoaded/);
+      assert.equal(context.getCountLoaded('foo'), 1);
+      assert.isUndefined(context.require);
+      done();
+    });
   });
 
   it('exposed / not executed', function(done) {
-    var options = deap(
-      {},
-      content.prepare([
+    var b = browserify();
+    b.plugin(content, {
+      contents: [
         {path: 'foo', source: 'moduleLoaded("foo"); module.exports=function(){moduleCalled("foo");};', execute: false, expose: true}
-      ])
-    );
+      ]
+    });
 
-    content
-      .process(browserify(options))
-      .bundle(function(error, src) {
-        var context = executeInVM(src);
-        assert.ifError(error);
-        assert.ok(src.length > 0);
-        assert.equal(context.getCountLoaded('foo'), 0);
-        assert.typeOf(context.require, 'function');
+    b.bundle(function(error, src) {
+      var context = executeInVM(src);
+      assert.ifError(error);
+      assert.ok(src.length > 0);
+      assert.equal(context.getCountLoaded('foo'), 0);
+      assert.typeOf(context.require, 'function');
 
-        var foo = context.require('foo');
-        assert.equal(context.getCountLoaded('foo'), 1);
-        assert.equal(context.getCountCalled('foo'), 0);
+      var foo = context.require('foo');
+      assert.equal(context.getCountLoaded('foo'), 1);
+      assert.equal(context.getCountCalled('foo'), 0);
 
-        foo();
-        assert.equal(context.getCountCalled('foo'), 1);
-        done();
-      });
+      foo();
+      assert.equal(context.getCountCalled('foo'), 1);
+      done();
+    });
   });
 
   it('exposed / executed', function(done) {
-    var options = deap(
-      {},
-      content.prepare([
+    var b = browserify();
+    b.plugin(content, {
+      contents: [
         {path: 'foo', source: 'moduleLoaded("foo"); module.exports=function(){moduleCalled("foo");};', execute: true, expose: true}
-      ])
-    );
+      ]
+    });
 
-    content
-      .process(browserify(options))
-      .bundle(function(error, src) {
-        var context = executeInVM(src);
-        assert.ifError(error);
-        assert.ok(src.length > 0);
-        assert.equal(context.getCountLoaded('foo'), 1);
-        assert.typeOf(context.require, 'function');
+    b.bundle(function(error, src) {
+      var context = executeInVM(src);
+      assert.ifError(error);
+      assert.ok(src.length > 0);
+      assert.equal(context.getCountLoaded('foo'), 1);
+      assert.typeOf(context.require, 'function');
 
-        var foo = context.require('foo');
-        assert.equal(context.getCountLoaded('foo'), 1);
-        assert.equal(context.getCountCalled('foo'), 0);
+      var foo = context.require('foo');
+      assert.equal(context.getCountLoaded('foo'), 1);
+      assert.equal(context.getCountCalled('foo'), 0);
 
-        foo();
-        assert.equal(context.getCountCalled('foo'), 1);
-        done();
-      });
+      foo();
+      assert.equal(context.getCountCalled('foo'), 1);
+      done();
+    });
   });
 
   it('with dependencies', function(done) {
-    var options = deap(
-      {
-        baseDir: baseDir,
-        paths: [libDir]
-      },
-      content.prepare([
-        {path: 'foo', source: 'moduleLoaded("foo"); require("bar/file1")();'}
-      ])
-    );
+    var b = browserify({
+      basedir: baseDir,
+      paths: [libDir]
+    });
 
-    content
-      .process(browserify(options))
-      .bundle(function(error, src) {
-        var context = executeInVM(src);
-        assert.ifError(error);
-        assert.ok(src.length > 0);
-        assert.isUndefined(context.require);
-        assert.equal(context.getCountLoaded('foo'), 1);
-        assert.equal(context.getCountLoaded('bar/file1'), 1);
-        assert.equal(context.getCountCalled('bar/file1'), 1);
-        done();
-      });
+    b.plugin(content, {
+      contents: [
+        {path: 'foo', source: 'moduleLoaded("foo"); require("bar/file1")();'}
+      ]
+    });
+
+    b.bundle(function(error, src) {
+      var context = executeInVM(src);
+      assert.ifError(error);
+      assert.ok(src.length > 0);
+      assert.isUndefined(context.require);
+      assert.equal(context.getCountLoaded('foo'), 1);
+      assert.equal(context.getCountLoaded('bar/file1'), 1);
+      assert.equal(context.getCountCalled('bar/file1'), 1);
+      done();
+    });
   });
 
   it('as dependencies', function(done) {
-    var options = deap(
-      {
-        basedir: baseDir,
-        debug: true
-      },
-      content.prepare([
-        {path: 'foobar', source: 'moduleLoaded("foobar"); module.exports=function() {moduleCalled("foobar")};'}
-      ])
-    );
-
-    var b = browserify(options);
+    var b = browserify({
+      basedir: baseDir,
+      paths: [libDir],
+      debug: true
+    });
     b.add('foo/requireFoobar.js');
+    b.plugin(content, {
+      contents: [
+        {path: 'foobar', source: 'moduleLoaded("foobar"); module.exports=function() {moduleCalled("foobar")};'}
+      ]
+    });
 
-    content.process(b);
     b.bundle(function(error, src) {
       assert.ifError(error);
       var context = executeInVM(src);
@@ -186,9 +182,11 @@ describe('bundler: add content', function() {
   });
 
   it('mixed', function(done) {
-    var options = deap(
-      {debug: true},
-      content.prepare([
+    var b = browserify({
+      debug: true
+    });
+    b.plugin(content, {
+      contents: [
         {path: 'foo1', source: 'moduleLoaded("foo1");'},
         {path: 'foo2', source: 'moduleLoaded("foo2"); module.exports=function(){moduleCalled("foo2");};', execute: false, expose: true},
         {path: 'foo3', source: 'moduleLoaded("foo3"); module.exports=function(){require("foo2")();};', expose: true},
@@ -198,66 +196,64 @@ describe('bundler: add content', function() {
           expose: true
         },
         {path: 'foo5', source: 'moduleLoaded("foo5");', execute: false, expose: true}
-      ]));
+      ]
+    });
 
-    content
-      .process(browserify(options))
-      .bundle(function(error, src) {
-        assert.ifError(error);
-        var str = src.toString('utf-8');
-        var map = convert.fromSource(str);
-        var context = executeInVM(src);
+    b.bundle(function(error, src) {
+      assert.ifError(error);
+      var str = src.toString('utf-8');
+      var map = convert.fromSource(str);
+      var context = executeInVM(src);
 
-        assert.ok(src.length > 0);
+      assert.ok(src.length > 0);
 
-        ['foo1', 'foo2', 'foo3', 'foo4', 'foo5'].forEach(function(name) {
-          assert.include(map.sourcemap.sources, name);
-        });
-        assert.typeOf(context.require, 'function');
-
-        assert.equal(context.getCountLoaded('foo1'), 1);
-        assert.equal(context.getCountLoaded('foo2'), 1);
-        assert.equal(context.getCountLoaded('foo3'), 1);
-        assert.equal(context.getCountLoaded('foo4'), 1);
-        assert.equal(context.getCountLoaded('foo5'), 0);
-
-        assert.throws(function() {
-          context.require('foo1');
-        }, /Cannot find module/);
-
-        var foo2 = context.require('foo2');
-        assert.equal(context.getCountLoaded('foo2'), 1);
-        assert.equal(context.getCountCalled('foo2'), 0);
-
-        foo2();
-        assert.equal(context.getCountCalled('foo2'), 1);
-
-        var foo3 = context.require('foo3');
-        assert.equal(context.getCountLoaded('foo3'), 1);
-        assert.equal(context.getCountLoaded('foo2'), 1);
-        assert.equal(context.getCountCalled('foo2'), 1);
-
-        foo3();
-        assert.equal(context.getCountLoaded('foo3'), 1);
-        assert.equal(context.getCountCalled('foo2'), 2);
-
-        var foo4 = context.require('foo4');
-        assert.equal(context.getCountLoaded('foo4'), 1);
-        assert.equal(context.getCountLoaded('foo3'), 1);
-        assert.equal(context.getCountLoaded('foo2'), 1);
-        assert.equal(context.getCountCalled('foo2'), 2);
-
-        foo4.execFoo2();
-        assert.equal(context.getCountCalled('foo2'), 3);
-
-        foo4.execFoo3();
-        assert.equal(context.getCountCalled('foo2'), 4);
-
-        context.require('foo5');
-        assert.equal(context.getCountLoaded('foo5'), 1);
-
-        done();
+      ['foo1', 'foo2', 'foo3', 'foo4', 'foo5'].forEach(function(name) {
+        assert.include(map.sourcemap.sources, name);
       });
+      assert.typeOf(context.require, 'function');
 
+      assert.equal(context.getCountLoaded('foo1'), 1);
+      assert.equal(context.getCountLoaded('foo2'), 1);
+      assert.equal(context.getCountLoaded('foo3'), 1);
+      assert.equal(context.getCountLoaded('foo4'), 1);
+      assert.equal(context.getCountLoaded('foo5'), 0);
+
+      assert.throws(function() {
+        context.require('foo1');
+      }, /Cannot find module/);
+
+      var foo2 = context.require('foo2');
+      assert.equal(context.getCountLoaded('foo2'), 1);
+      assert.equal(context.getCountCalled('foo2'), 0);
+
+      foo2();
+      assert.equal(context.getCountCalled('foo2'), 1);
+
+      var foo3 = context.require('foo3');
+      assert.equal(context.getCountLoaded('foo3'), 1);
+      assert.equal(context.getCountLoaded('foo2'), 1);
+      assert.equal(context.getCountCalled('foo2'), 1);
+
+      foo3();
+      assert.equal(context.getCountLoaded('foo3'), 1);
+      assert.equal(context.getCountCalled('foo2'), 2);
+
+      var foo4 = context.require('foo4');
+      assert.equal(context.getCountLoaded('foo4'), 1);
+      assert.equal(context.getCountLoaded('foo3'), 1);
+      assert.equal(context.getCountLoaded('foo2'), 1);
+      assert.equal(context.getCountCalled('foo2'), 2);
+
+      foo4.execFoo2();
+      assert.equal(context.getCountCalled('foo2'), 3);
+
+      foo4.execFoo3();
+      assert.equal(context.getCountCalled('foo2'), 4);
+
+      context.require('foo5');
+      assert.equal(context.getCountLoaded('foo5'), 1);
+
+      done();
+    });
   });
 });

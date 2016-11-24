@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "command": {
+      "enum": [
+        "code",
+        "sourcemaps"
+      ]
+    },
+    "config": {
+      "$ref": "/request/config"
+    }
+  },
+  "required": [
+    "command",
+    "config",
+    "name"
+  ],
+  "additionalProperties": false
+}

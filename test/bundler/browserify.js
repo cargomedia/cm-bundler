@@ -2,6 +2,7 @@ var vm = require('vm');
 var path = require('path');
 var assert = require('chai').assert;
 var deap = require('deap');
+var Promise = require('bluebird');
 var browserify = require('browserify');
 var convert = require('convert-source-map');
 
@@ -12,32 +13,12 @@ var lib2Dir = path.join(dataDir, 'lib2');
 
 var bundler = require('../../lib/bundler');
 
-var executeInVM = function(src) {
-  var context = {
-    console: console,
-    callCount: {},
-    loadCount: {},
-    moduleLoaded: function(name) {
-      context.loadCount[name] = context.getCountLoaded(name) + 1;
-    },
-    getCountLoaded: function(name) {
-      return name in context.loadCount ? context.loadCount[name] : 0;
-    },
-    moduleCalled: function(name) {
-      context.callCount[name] = context.getCountCalled(name) + 1;
-    },
-    getCountCalled: function(name) {
-      return name in context.callCount ? context.callCount[name] : 0;
-    }
-  };
-  vm.runInNewContext(src, context);
-  return context;
-};
-
 
 describe('bundler: browserify', function() {
 
   it('full', function(done) {
+    bundler.clearCache();
+
     bundler.browserify({
       "entries": [
         "foo/file2.js",
@@ -68,13 +49,10 @@ describe('bundler: browserify', function() {
         libDir,
         lib2Dir
       ],
-      "sourceMaps": {
-        "enabled": true
-      },
       "baseDir": baseDir
     }).bundle(function(error, src) {
       assert.ifError(error);
-      assert.isObject(src);
+      assert.instanceOf(src, Buffer);
       assert.ok(src.length > 0);
       var str = src.toString('utf-8');
       var map = convert.fromSource(str);
@@ -99,6 +77,9 @@ describe('bundler: browserify', function() {
           '`' + name + '` exists in the source maps.'
         );
       });
+
+      assert.match(map.sourcemap.sourcesContent[1], /foo\/file1/);
+      assert.match(map.sourcemap.sourcesContent[1], /exports = function/);
 
       var context = executeInVM(src);
       assert.typeOf(context.require, 'function');
@@ -154,5 +135,95 @@ describe('bundler: browserify', function() {
       done();
     });
   });
+
+  it('ignoreMissing', function(done) {
+    bundler.clearCache();
+
+    Promise
+      .try(function() {
+        var b = bundler.browserify({
+          "entries": [],
+          "libraries": [],
+          "paths": [],
+          "ignoreMissing": true,
+          "content": [
+            {
+              "path": "defined/outside",
+              "source": "moduleLoaded('defined/outside'); module.exports=function(){moduleCalled('defined/outside');};",
+              "execute": false,
+              "expose": true
+            }
+          ],
+          "baseDir": baseDir
+        });
+
+        return bundlePromise(b);
+      })
+      .then(function(previousCode) {
+        bundler.browserify({
+          "entries": [],
+          "libraries": [],
+          "paths": [],
+          "ignoreMissing": true,
+          "content": [
+            {
+              "path": "foo",
+              "source": "moduleLoaded('foo'); module.exports=function(){moduleCalled('foo'); var out = require('defined/outside'); out();};",
+              "execute": false,
+              "expose": true
+            }
+          ],
+          "baseDir": baseDir
+        }).bundle(function(error, src) {
+          assert.ifError(error);
+          assert.instanceOf(src, Buffer);
+          assert.ok(src.length > 0);
+          var context = executeInVM(Buffer.concat([previousCode, src]));
+
+          assert.typeOf(context.require, 'function');
+          assert.equal(context.getCountLoaded('defined/outside'), 0);
+          assert.equal(context.getCountLoaded('foo'), 0);
+
+          var foo = context.require('foo');
+          assert.equal(context.getCountLoaded('foo'), 1);
+
+          foo();
+          assert.equal(context.getCountCalled('foo'), 1);
+          assert.equal(context.getCountCalled('defined/outside'), 1);
+
+          done();
+        });
+      });
+  });
 });
 
+
+function executeInVM(src, context) {
+  context = deap({
+    console: console,
+    callCount: {},
+    loadCount: {},
+    moduleLoaded: function(name) {
+      context.loadCount[name] = context.getCountLoaded(name) + 1;
+    },
+    getCountLoaded: function(name) {
+      return name in context.loadCount ? context.loadCount[name] : 0;
+    },
+    moduleCalled: function(name) {
+      context.callCount[name] = context.getCountCalled(name) + 1;
+    },
+    getCountCalled: function(name) {
+      return name in context.callCount ? context.callCount[name] : 0;
+    }
+  }, context || {});
+  vm.runInNewContext(src, context);
+  return context;
+}
+
+function bundlePromise(browserify) {
+  return new Promise(function(resolve, reject) {
+    browserify.bundle(function(error, src) {
+      error && reject(error) || resolve(src);
+    });
+  });
+}
