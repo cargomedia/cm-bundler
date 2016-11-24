@@ -47,7 +47,7 @@ Additionally, some cli options may also override this config (log, host, port, e
 module.exports = {
   bundler: {
     port: 6644,
-    host: '0.0.0.0',
+    host: '127.0.0.1',
     socket: null,                       // serve through a unix domain socket (host:port ignored)
     timeout: 10000,                     // max time to build a bundle
     updateDelay: 100                    // delay between 2 bundle renew due to file changes (only if watcher is enabled)
@@ -107,7 +107,7 @@ echo -ne '{"name":"test","command":"code","config":{}}\004' | nc 127.0.0.1 6644
 
 #### JSON configuration
 
-```json
+```js
 {
   "watch": [                    // watched glob patterns
     "path/to/bar.js",
@@ -173,7 +173,7 @@ Example: `/usr/foo/my/lib/file.js` file with `{"foo/lib/": ".*my/lib/"}` replace
 **success**
 ```json
 {
-   "content": "..."  // generated bundle content
+   "content": "generated bundle code..."
 }
 ```
 
