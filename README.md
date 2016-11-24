@@ -198,6 +198,34 @@ There are 2 type of cache:
 When a watched file is changed, matching shared caches are invalidated and the config cache is regenerated.
 
 
+[Browserify Plugins][code-bundler-plugin]
+-----------------------------------------
+
+### Cache
+
+Store the output of [module-deps][m-deps] stream and use it as the [`cache` options][b-cache] during the next browserify execution.
+
+The cache is invalidated per module, so only this module + its dependencies will be resolved by [module-deps][m-deps] during the next 
+browserify build.
+
+_Plugin strongly inspired by [watchify plugin][b-watch]._
+
+
+### Content
+
+Inject inline content in the bundle, the code can refer to other modules available through browserify.
+In `expose` mode, other browserify modules can refer to the inline content, with `require(<path>)`.
+
+#### Syntax
+
+- `path`: name used to refer to the inline module (`require(<path>)`)
+- `source`: source code
+- `execute / optional (default: true)`: like `browserify.add` for entries, the code is executed when it is loaded
+- `expose / optional (default: false)`: like `browserify.require`, the code is exposed to the global scope via `require()`
+
+_Note: with `execute: false` + `expose: false`, the code will never be executed and will be unreachable_
+
+
 Test
 ----
 
@@ -222,4 +250,7 @@ npm publish https://github.com/cargomedia/cm-bundler/archive/<GitTagWithUpdatedP
  [b-prelude]: https://github.com/substack/browser-pack
  [b-compat]: https://github.com/substack/node-browserify#compatibility
  [b-cache]: https://github.com/substack/module-deps#var-d--mdepsopts
+ [b-watch]: https://github.com/substack/watchify
+ [m-deps]: https://github.com/substack/module-deps
  [eot]: https://en.wikipedia.org/wiki/End-of-Transmission_character
+ [code-bundler-plugin]: https://github.com/cargomedia/cm-bundler/tree/master/lib/bundler/plugins
