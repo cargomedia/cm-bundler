@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/cargomedia/cm-bundler.svg?branch=master)][travis]
+[![npm](https://img.shields.io/npm/v/cm-bundler.svg)][npm]
 
 CM bundler
 ==========
@@ -98,9 +99,15 @@ module.exports = {
 
 _Each request must be terminated by a [End-of-Transmission character][eot] (`U+004`)_
 
+
+##### example
+```bash
+echo -ne '{"name":"test","command":"code","config":{}}\004' | nc 127.0.0.1 6644 
+```
+
 #### JSON configuration
 
-```js
+```json
 {
   "watch": [                    // watched glob patterns
     "path/to/bar.js",
@@ -142,6 +149,13 @@ _Each request must be terminated by a [End-of-Transmission character][eot] (`U+0
 }
 ```
 
+##### `watch`
+
+Only patterns listed by the `watch` property will be watched.
+Only file changes (add/remove/change) will trigger a renew of the config cache.
+
+_see [Caches](#caches) section for more details._
+
 ##### `sourceMaps.replace`
 
 This option replace all matching `file.path` in the sourcemaps, in addition to some built-in replacements:
@@ -157,19 +171,31 @@ Example: `/usr/foo/my/lib/file.js` file with `{"foo/lib/": ".*my/lib/"}` replace
 ### Response
 
 **success**
-```js
+```json
 {
    "content": "..."  // generated bundle content
 }
 ```
 
 **error**
-```js
+```json
 {
    "error": "Error message",
    "stack": "stracktrace..."
 }
 ```
+
+Caches
+------
+
+There are 2 type of cache:
+- config specific:
+  - config cache: overall bundle cache, the key is a combination of the config hash + watched files checksum 
+- shared by all config:
+  - [browserify cache][b-cache]: per browserify module
+  - concat cache: per concat patterns  
+
+When a watched file is changed, matching shared caches are invalidated and the config cache is regenerated.
 
 
 Test
@@ -179,8 +205,21 @@ Test
 npm test
 ```
 
+Release
+-------
+
+ - update package.json with a new version
+ - release a new git tag with the updated package.json
+
+After that the npm release should be done automatically. If it didn't happen then release it manually:
+```
+npm publish https://github.com/cargomedia/cm-bundler/archive/<GitTagWithUpdatedPackageJson>.tar.gz
+```
+
 
  [travis]: https://travis-ci.org/cargomedia/cm-bundler
+ [npm]: https://www.npmjs.com/package/cm-bundler
  [b-prelude]: https://github.com/substack/browser-pack
  [b-compat]: https://github.com/substack/node-browserify#compatibility
+ [b-cache]: https://github.com/substack/module-deps#var-d--mdepsopts
  [eot]: https://en.wikipedia.org/wiki/End-of-Transmission_character
