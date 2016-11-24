@@ -6,7 +6,7 @@
   "author": "Cargomedia",
   "license": "MIT",
   "bin": {
-    "cm-bundler": "bin/cmd.js"
+    "cm-bundler": "bin/cm-bundler.js"
   },
   "repository": {
     "type": "git",
