@@ -27,7 +27,7 @@ try {
 
   program
     .version(require('../package.json').version)
-    .option('-H, --host <host>', 'hostname (default: 0.0.0.0)')
+    .option('-H, --host <host>', 'hostname (default: 127.0.0.1)')
     .option('-p, --port <port>', 'port (default: 6644)')
     .option('-b, --base-dir <dir>', 'base directory')
     .option('-c, --config <file>', 'config file (JSON format)')

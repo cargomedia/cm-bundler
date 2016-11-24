@@ -26,7 +26,7 @@ $ cm-bundler --help
 
     -h, --help             output usage information
     -V, --version          output the version number
-    -H, --host <host>      hostname (default: 0.0.0.0)
+    -H, --host <host>      hostname (default: 127.0.0.1)
     -p, --port <port>      port (default: 6644)
     -b, --base-dir <dir>   base directory
     -c, --config <file>    config file (JSON format)
