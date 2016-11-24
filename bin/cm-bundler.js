@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 var verbose = true;
 var server = null;
+var logger = null;
 
 try {
   process.on('SIGINT', function() {
@@ -10,18 +11,12 @@ try {
     abort();
   });
 
-  var session = require('../lib/session');
-  var configCache = require('../lib/bundler/config/cache').getInstance();
-
   var _ = require('underscore');
-  var util = require('util');
   var program = require('commander');
-  var pipeline = require('pumpify');
-  var Promise = require('bluebird');
-  var logger = require('../lib/util/logger');
+  var session = require('../lib/session');
   var config = require('../lib/config');
   var logConfig = require('../lib/util/logger/config');
-
+  var BundlerServer = require('../lib/bundler/server');
 
   program
     .version(require('../package.json').version)
@@ -63,101 +58,23 @@ try {
 
   verbose = program.verbose || program.moreVerbose;
 
-  var bundler = require('../lib/bundler');
-  var filter = require('../lib/stream/filter');
-  var UnixSocketServer = require('../lib/socket/server');
-  var BundleConfig = require('../lib/bundler/config');
-
-  if (config.get('bundler.socket')) {
-    server = new UnixSocketServer({
-      socket: config.get('bundler.socket')
-    });
-  } else {
-    server = new UnixSocketServer({
-      host: config.get('bundler.host'),
-      port: config.get('bundler.port')
-    });
-  }
-
-  var rid = 0;
-
-  /**
-   * @param {Socket} client
-   * @param {String} name
-   * @param {BundleConfig~config} jsonConfig
-   * @param {Transform} transform
-   */
-  function processRequest(client, name, jsonConfig, transform) {
-    var bundleConfig = new BundleConfig(
-      jsonConfig, name, config.get('bundler.baseDir'), config.get('bundler.timeout'), config.get('bundler.updateDelay')
-    );
-
-    session.set('requestId', ++rid);
-    session.set('config', bundleConfig);
-    logger.debug('requested');
-
-    var start = new Date();
-    Promise
-      .try(function() {
-        return configCache.get(bundleConfig);
-      })
-      .then(function(config) {
-        if (program.moreVerbose) {
-          logger.debug('\n%s', JSON.stringify(config.get(), null, '  '));
-        }
-        return new Promise(function(resolve, reject) {
-          var build = pipeline.obj(
-            config.process(),
-            transform(),
-            filter.createResponse()
-          );
-          session.bindEmitter(build);
-
-          build
-            .on('error', reject)
-            .on('finish', function() {
-              var response = build.pipe(client).on('finish', resolve);
-              session.bindEmitter(response);
-              response
-                .on('error', function(error) {
-                  logger.error('\n%s', error.stack);
-                });
-            });
-        });
-      })
-      .then(function() {
-        var cacheConfig = session.get('cacheConfig');
-        var cacheStream = session.get('cacheStream');
-        logger.log('info', util.format('done in %sms', new Date() - start), {
-          post: cacheConfig && cacheStream ? 'from cache' : ''
-        });
-      })
-      .catch(function(error) {
-        logger.error('\n%s', error.stack);
-        var errorResponse = filter.createErrorResponse(error).pipe(client);
-        session.bindEmitter(errorResponse);
-        errorResponse.on('error', function(error) {
-          logger.error('\n%s', error.stack);
-        });
-      });
-  }
-
   session.run(function() {
+    var logger = require('../lib/util/logger');
+
     session.set('requestId', 'service');
+
+    if (config.get('bundler.socket')) {
+      server = new BundlerServer({
+        socket: config.get('bundler.socket')
+      });
+    } else {
+      server = new BundlerServer({
+        host: config.get('bundler.host'),
+        port: config.get('bundler.port')
+      });
+    }
+
     session.bindEmitter(server);
-
-    server.on('code', function(client, name, jsonConfig) {
-      session.run(function() {
-        processRequest(client, name, jsonConfig, filter.code);
-      });
-    });
-
-    server.on('sourcemaps', function(client, name, jsonConfig) {
-      session.run(function() {
-        processRequest(client, name, jsonConfig, filter.sourcemaps);
-      });
-    });
-
     server.on('error', function(error) {
       server.stop();
       abort(error);
