@@ -77,11 +77,11 @@ describe('bundler: BundlerConfig', function() {
     var config = new BundleConfig({
       bundleName: 'foo',
       watch: [
-        path.join(concatDir, '*.js'),
-        path.join(libDir, '**/*.js'),
-        path.join(concatDir, 'inexistent/*.js')
+        'concat/*.js',
+        'lib/**/*.js',
+        'nonexistent/*.js'
       ]
-    }, baseDir);
+    }, 'foo', dataDir);
 
     assert.deepEqual(config._getPatterns(), [
       path.join(concatDir, '*.js'),
@@ -222,11 +222,7 @@ describe('bundler: BundlerConfig', function() {
     emitter.on('stream', function(stream) {
       assert.equal(processCount, 1);
       stream.on('finish', function() {
-        assert.deepEqual(invalidates, [
-          path.join(dataDir, 'foo1.js'),
-          path.join(dataDir, 'foo2.js'),
-          path.join(dataDir, 'foo3.js')
-        ]);
+        assert.deepEqual(invalidates, ['foo1.js', 'foo2.js', 'foo3.js']);
         done();
       });
     });
@@ -265,19 +261,12 @@ describe('bundler: BundlerConfig', function() {
     emitter.on('stream', function(stream) {
       if (processCount == 1) {
         stream.on('finish', function() {
-          assert.deepEqual(invalidates, [
-            path.join(dataDir, 'foo1.js'),
-            path.join(dataDir, 'foo2.js')
-          ]);
+          assert.deepEqual(invalidates, ['foo1.js', 'foo2.js']);
         });
       }
       if (processCount == 2) {
         stream.on('finish', function() {
-          assert.deepEqual(invalidates, [
-            path.join(dataDir, 'foo1.js'),
-            path.join(dataDir, 'foo2.js'),
-            path.join(dataDir, 'foo3.js')
-          ]);
+          assert.deepEqual(invalidates, ['foo1.js', 'foo2.js', 'foo3.js']);
         });
         done();
       }
