@@ -1,3 +1,8 @@
+UNMAINTAINED
+============
+This project is not maintained anymore.
+If you want to take over contact us at tech@cargomedia.ch.
+
 [![Build Status](https://travis-ci.org/cargomedia/cm-bundler.svg?branch=master)][travis]
 
 CM bundler
